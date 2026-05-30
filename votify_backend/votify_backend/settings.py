@@ -47,9 +47,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -161,4 +161,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'laetitiamaelle740@gmail.com'
 
 EMAIL_HOST_PASSWORD = 'cncg crvr jpbg bhxg'
-CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+]
