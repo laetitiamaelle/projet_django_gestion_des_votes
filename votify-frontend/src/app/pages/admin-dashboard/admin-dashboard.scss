@@ -1,0 +1,434 @@
+// ============================================================
+// admin-dashboard.component.scss
+// Dashboard administrateur avec grille de cartes scrutins
+// ============================================================
+
+$blue:       #2563EB;
+$blue-dark:  #1D4ED8;
+$blue-light: #EFF6FF;
+$dark:       #0f172a;
+$gray:       #6b7280;
+$border:     #e5e7eb;
+$sidebar-w:  210px;
+
+// ══════════════════════════════════════════════════════════
+// LAYOUT GLOBAL
+// ══════════════════════════════════════════════════════════
+.admin-wrapper {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+// ══════════════════════════════════════════════════════════
+// SIDEBAR (identique au superadmin dashboard)
+// ══════════════════════════════════════════════════════════
+.sidebar {
+  width: $sidebar-w;
+  min-width: $sidebar-w;
+  height: 100vh;
+  background: white;
+  border-right: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 0.75rem;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; margin-bottom: 2rem;
+  padding: 0 0.5rem;
+}
+
+.sidebar-logo-icon {
+  width: 36px; height: 36px;
+  background: $blue; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 1.1rem; flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  font-weight: 800; font-size: 1.1rem;
+  color: $dark; letter-spacing: -0.03em;
+}
+
+.sidebar-nav {
+  display: flex; flex-direction: column;
+  gap: 4px; flex: 1;
+}
+
+.sidebar-lien {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: $gray;
+  font-size: 0.875rem; font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  i { font-size: 1rem; }
+
+  &:hover { background: $blue-light; color: $blue; }
+
+  &.actif {
+    background: $blue;
+    color: white !important;
+    font-weight: 600;
+  }
+}
+
+.btn-deconnexion {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; background: none; border: none;
+  padding: 0.65rem 0.85rem; border-radius: 10px;
+  font-size: 0.875rem; font-weight: 500;
+  color: #dc2626; cursor: pointer;
+  transition: background 0.2s; text-align: left;
+  margin-top: 0.5rem;
+  &:hover { background: #fff5f5; }
+}
+
+// ══════════════════════════════════════════════════════════
+// ZONE PRINCIPALE
+// ══════════════════════════════════════════════════════════
+.main-zone {
+  flex: 1; display: flex;
+  flex-direction: column;
+  overflow: hidden; min-width: 0;
+}
+
+// ── Topbar ────────────────────────────────────────────────
+.topbar {
+  height: 64px; background: white;
+  border-bottom: 1px solid $border;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 1.75rem; flex-shrink: 0;
+}
+
+.topbar-titre {
+  font-weight: 600; color: $gray;
+  margin: 0; font-size: 0.95rem;
+}
+
+.topbar-droite {
+  display: flex; align-items: center; gap: 0.75rem;
+}
+
+.recherche-box {
+  display: flex; align-items: center; gap: 8px;
+  background: #f3f4f6; border-radius: 10px;
+  padding: 0.45rem 0.9rem;
+
+  i { color: $gray; font-size: 0.85rem; }
+
+  input {
+    background: none; border: none; outline: none;
+    font-size: 0.85rem; color: $dark; width: 150px;
+    &::placeholder { color: #9ca3af; }
+  }
+}
+
+.btn-notif {
+  width: 38px; height: 38px;
+  background: none; border: none;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: $gray; cursor: pointer;
+  transition: background 0.2s;
+  &:hover { background: #f3f4f6; }
+}
+
+// Avatar photo fictif
+.avatar-photo {
+  width: 36px; height: 36px;
+  border-radius: 50%; overflow: hidden;
+  cursor: pointer;
+}
+
+.avatar-initiales-photo {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, $blue, $blue-dark);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700;
+}
+
+// ── Contenu ───────────────────────────────────────────────
+.main-contenu {
+  flex: 1; overflow-y: auto;
+  padding: 1.75rem;
+}
+
+// Bienvenue
+.bienvenue-titre {
+  font-weight: 800; font-size: 1.7rem;
+  color: $dark; letter-spacing: -0.03em;
+  margin-bottom: 0.25rem;
+}
+
+.bienvenue-sous-titre {
+  color: $gray; font-size: 0.9rem; margin: 0;
+}
+
+// Boutons action en-tête
+.btn-exporter {
+  background: white; color: $dark;
+  border: 1.5px solid $border;
+  border-radius: 10px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center;
+
+  &:hover { border-color: $blue; color: $blue; }
+}
+
+.btn-nouveau-scrutin {
+  background: $blue; color: white;
+  border: none; border-radius: 10px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.85rem; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center;
+  transition: all 0.2s;
+
+  &:hover {
+    background: $blue-dark;
+    box-shadow: 0 4px 12px rgba($blue, 0.3);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// CARTES STATISTIQUES
+// ══════════════════════════════════════════════════════════
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 1.25rem;
+  height: 100%;
+  transition: box-shadow 0.2s;
+  &:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+}
+
+.stat-label {
+  font-size: 0.8rem; color: $gray;
+  margin-bottom: 0.35rem; font-weight: 500;
+}
+
+.stat-valeur {
+  font-size: 1.8rem; font-weight: 900;
+  color: $dark; letter-spacing: -0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.stat-variation {
+  font-size: 0.78rem; margin: 0;
+  color: $gray;
+  &.positif { color: #16a34a; }
+}
+
+.stat-sous-titre {
+  font-size: 0.78rem; color: #9ca3af; margin: 0;
+}
+
+.stat-icone {
+  width: 42px; height: 42px;
+  background: $blue-light; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; color: $blue; flex-shrink: 0;
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION SCRUTINS
+// ══════════════════════════════════════════════════════════
+.section-titre {
+  font-weight: 800; font-size: 1.05rem; color: $dark;
+}
+
+.derniere-maj {
+  font-size: 0.8rem; color: #9ca3af;
+}
+
+.lien-catalogue {
+  color: $blue; font-size: 0.875rem;
+  font-weight: 600; text-decoration: none;
+  display: flex; align-items: center;
+  &:hover { text-decoration: underline; }
+}
+
+// ══════════════════════════════════════════════════════════
+// CARTES SCRUTINS
+// ══════════════════════════════════════════════════════════
+.scrutin-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid $border;
+  padding: 1.25rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+}
+
+// En-tête : statut + menu dots
+.scrutin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+// Badges de statut
+.badge-statut {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.statut-en_cours {
+    background: #dbeafe;
+    color: $blue;
+  }
+  &.statut-planifie {
+    background: #f3f4f6;
+    color: $gray;
+  }
+  &.statut-termine {
+    background: #dcfce7;
+    color: #166534;
+  }
+  &.statut-brouillon {
+    background: #fef3c7;
+    color: #92400e;
+  }
+}
+
+.btn-menu-dots {
+  background: none; border: none;
+  color: #9ca3af; cursor: pointer;
+  font-size: 1rem; padding: 2px 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  &:hover { background: #f3f4f6; color: $dark; }
+}
+
+// Titre du scrutin
+.scrutin-titre {
+  font-weight: 700; font-size: 0.9rem;
+  color: $dark; line-height: 1.4;
+  margin-bottom: 0.5rem;
+  // Limiter à 2 lignes
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Date
+.scrutin-date {
+  font-size: 0.8rem; color: $gray;
+  margin-bottom: 1rem;
+  display: flex; align-items: center;
+}
+
+// Barre de participation
+.participation-section {
+  margin-bottom: 1rem;
+  flex: 1;
+}
+
+.participation-label {
+  font-size: 0.8rem; font-weight: 500; color: $gray;
+}
+
+.participation-pct {
+  font-size: 0.8rem; font-weight: 700; color: $dark;
+}
+
+.barre-fond {
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.barre-remplie {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+.participation-detail {
+  font-size: 0.75rem; color: #9ca3af; margin: 0;
+}
+
+// Boutons de la carte
+.scrutin-actions {
+  display: flex; gap: 0.75rem;
+  margin-top: auto; padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.btn-gerer {
+  flex: 1; background: white;
+  border: 1.5px solid $border;
+  border-radius: 10px;
+  padding: 0.55rem;
+  font-size: 0.825rem; font-weight: 600;
+  color: $dark; cursor: pointer;
+  transition: all 0.2s;
+  &:hover { border-color: $blue; color: $blue; }
+}
+
+.btn-details {
+  flex: 1; background: $blue;
+  border: none; border-radius: 10px;
+  padding: 0.55rem;
+  font-size: 0.825rem; font-weight: 600;
+  color: white; cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: $blue-dark; }
+}
+
+// ══════════════════════════════════════════════════════════
+// FOOTER + BOUTON FLOTTANT
+// ══════════════════════════════════════════════════════════
+.dashboard-footer {
+  text-align: center; padding: 1rem;
+  font-size: 0.75rem; color: #9ca3af;
+  border-top: 1px solid $border;
+  background: white; flex-shrink: 0;
+}
+
+.btn-flottant {
+  position: fixed;
+  bottom: 2rem; right: 2rem;
+  width: 52px; height: 52px;
+  background: $blue; color: white;
+  border: none; border-radius: 50%;
+  font-size: 1.4rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 999;
+  box-shadow: 0 4px 20px rgba($blue, 0.4);
+  transition: all 0.25s ease;
+
+  &:hover {
+    background: $blue-dark;
+    transform: scale(1.1);
+    box-shadow: 0 8px 28px rgba($blue, 0.5);
+  }
+}

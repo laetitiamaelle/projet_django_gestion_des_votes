@@ -1,0 +1,201 @@
+<!-- ============================================================
+     DASHBOARD ADMIN — admin-dashboard.component.html
+     Layout sidebar + contenu principal.
+     Affiche les scrutins sous forme de cartes (pas de tableau).
+     Fidèle à la maquette Visily fournie.
+     ============================================================ -->
+
+<div class="admin-wrapper">
+
+  <!-- ══════════════════════════════════════════════════════
+       SIDEBAR
+       ══════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <!-- Logo -->
+    <a href="/" class="sidebar-brand">
+      <div class="sidebar-logo-icon">
+        <i class="bi bi-check2-square"></i>
+      </div>
+      <span class="sidebar-logo-text">Votify</span>
+    </a>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      @for (item of navItems; track item.route) {
+        <a
+          class="sidebar-lien"
+          [class.actif]="item.actif"
+          (click)="setOnglet(item.route)"
+          href="javascript:void(0)">
+          <i [class]="'bi ' + item.icone"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <!-- Déconnexion -->
+    <button class="btn-deconnexion">
+      <i class="bi bi-box-arrow-left text-danger"></i>
+      <span>Déconnexion</span>
+    </button>
+  </aside>
+
+  <!-- ══════════════════════════════════════════════════════
+       ZONE PRINCIPALE
+       ══════════════════════════════════════════════════════ -->
+  <div class="main-zone">
+
+    <!-- ── Topbar ─────────────────────────────────────── -->
+    <header class="topbar">
+      <h6 class="topbar-titre">Tableau de bord</h6>
+      <div class="topbar-droite">
+        <div class="recherche-box">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Rechercher...">
+        </div>
+        <button class="btn-notif">
+          <i class="bi bi-bell"></i>
+        </button>
+        <!-- Avatar photo (fictif) -->
+        <div class="avatar-photo">
+          <div class="avatar-initiales-photo">ML</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Contenu scrollable ─────────────────────────── -->
+    <main class="main-contenu">
+
+      <!-- En-tête avec boutons d'action -->
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+          <h3 class="bienvenue-titre">
+            Bonjour, Marc Lefebvre 👋
+          </h3>
+          <p class="bienvenue-sous-titre">
+            Voici un aperçu de vos activités électorales aujourd'hui.
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-exporter">
+            <i class="bi bi-bar-chart me-2"></i>Exporter le rapport
+          </button>
+          <button class="btn-nouveau-scrutin">
+            <i class="bi bi-plus me-1"></i>Nouveau scrutin
+          </button>
+        </div>
+      </div>
+
+      <!-- ────────────────────────────────────────────────
+           CARTES STATISTIQUES
+           ──────────────────────────────────────────────── -->
+      <div class="row g-3 mb-4">
+        @for (stat of stats; track stat.titre) {
+          <div class="col-6 col-xl-3">
+            <div class="stat-card">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <p class="stat-label">{{ stat.titre }}</p>
+                  <h3 class="stat-valeur">{{ stat.valeur }}</h3>
+                  @if (stat.variation) {
+                    <p class="stat-variation" [class.positif]="stat.variationPositive">
+                      <i class="bi bi-graph-up-arrow me-1"></i>{{ stat.variation }}
+                    </p>
+                  }
+                  @if (stat.sousTitre && !stat.variation) {
+                    <p class="stat-sous-titre">{{ stat.sousTitre }}</p>
+                  }
+                </div>
+                <div class="stat-icone">
+                  <i [class]="'bi ' + stat.icone"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- ────────────────────────────────────────────────
+           MES SCRUTINS RÉCENTS
+           ──────────────────────────────────────────────── -->
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+          <h5 class="section-titre mb-0">Mes scrutins récents</h5>
+          <span class="derniere-maj">Dernière mise à jour : il y a 5 min</span>
+        </div>
+        <a href="#" class="lien-catalogue">
+          Voir tout le catalogue <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+
+      <!-- Grille de cartes scrutins -->
+      <div class="row g-3">
+        @for (scrutin of scrutins; track scrutin.id) {
+          <div class="col-md-6 col-xl-4">
+            <div class="scrutin-card">
+
+              <!-- En-tête carte : statut + menu -->
+              <div class="scrutin-card-header">
+                <span class="badge-statut" [ngClass]="'statut-' + scrutin.statut">
+                  <i [class]="'bi ' + getIconeStatut(scrutin.statut) + ' me-1'"></i>
+                  {{ getLibelleStatut(scrutin.statut) }}
+                </span>
+                <button class="btn-menu-dots">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+              </div>
+
+              <!-- Titre du scrutin -->
+              <h6 class="scrutin-titre">{{ scrutin.titre }}</h6>
+
+              <!-- Date de fin -->
+              <p class="scrutin-date">
+                <i class="bi bi-calendar3 me-1"></i>
+                {{ scrutin.dateFin }}
+              </p>
+
+              <!-- Barre de participation -->
+              <div class="participation-section">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="participation-label">Participation</span>
+                  <span class="participation-pct">{{ scrutin.participation }}%</span>
+                </div>
+                <div class="barre-fond">
+                  <div
+                    class="barre-remplie"
+                    [style.width.%]="scrutin.participation"
+                    [style.background]="getCouleurParticipation(scrutin.participation)">
+                  </div>
+                </div>
+                <p class="participation-detail">
+                  {{ scrutin.votesExprimes | number }} votes sur
+                  {{ scrutin.totalElecteurs | number }} électeurs
+                </p>
+              </div>
+
+              <!-- Boutons action -->
+              <div class="scrutin-actions">
+                <button class="btn-gerer">Gérer</button>
+                <button class="btn-details">Détails</button>
+              </div>
+
+            </div>
+          </div>
+        }
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      © 2026 Votify. Tous droits réservés. Sécurisé par chiffrement de bout en bout.
+    </footer>
+  </div>
+
+</div>
+
+<!-- Bouton flottant "+" -->
+<button class="btn-flottant">
+  <i class="bi bi-plus-lg"></i>
+</button>
