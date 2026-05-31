@@ -165,3 +165,16 @@ EMAIL_HOST_PASSWORD = 'cncg crvr jpbg bhxg'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
 ]
+# 1. Dit à Django d'autoriser l'authentification via l'adresse email
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# 2. Configuration explicite pour SimpleJWT
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'USER_ID_FIELD': 'email',      # 🌟 CRUCIAL : Indique que l'ID du token est l'email
+    'USER_ID_CLAIM': 'user_id',
+}

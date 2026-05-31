@@ -106,7 +106,7 @@ class ValiderDemandeAdminView(APIView):
         password = generate_password()
 
         utilisateur = User.objects.create_user(
-            username=demande.email,
+            username=demande.nom,
             email=demande.email,
             password=password,
             role='admin',
@@ -139,3 +139,9 @@ Veuillez modifier votre mot de passe après connexion.
         return Response({
             'message': 'Compte administrateur créé avec succès'
         })
+    
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

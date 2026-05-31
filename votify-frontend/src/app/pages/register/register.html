@@ -30,15 +30,15 @@
     <!-- Arguments / points forts -->
     <div class="arguments-liste mt-4">
       @for (arg of arguments; track arg.titre) {
-        <div class="argument-item">
-          <div class="argument-icone">
-            <i [class]="'bi ' + arg.icone"></i>
-          </div>
-          <div>
-            <h6 class="argument-titre">{{ arg.titre }}</h6>
-            <p class="argument-desc">{{ arg.description }}</p>
-          </div>
+      <div class="argument-item">
+        <div class="argument-icone">
+          <i [class]="'bi ' + arg.icone"></i>
         </div>
+        <div>
+          <h6 class="argument-titre">{{ arg.titre }}</h6>
+          <p class="argument-desc">{{ arg.description }}</p>
+        </div>
+      </div>
       }
     </div>
 
@@ -69,19 +69,15 @@
 
         <!-- Nom complet -->
         <div class="mb-3">
-          <label class="label-field">Nom complet</label>
+          <label class="label-field">nom</label>
           <div class="input-wrap">
             <i class="bi bi-person input-icone"></i>
-            <input
-              type="text"
-              formControlName="nom"
-              class="champ"
-              [class.champ-erreur]="nom.invalid && nom.touched"
+            <input type="text" formControlName="first_name" class="champ" [class.champ-erreur]="first_name.invalid && first_name.touched"
               placeholder="Jean Dupont">
           </div>
-          @if (nom.invalid && nom.touched) {
-            <span class="msg-erreur">Le nom complet est requis.</span>
-          }
+          <!-- @if (username.invalid && username.touched) {
+          <span class="msg-erreur">Le nom d'utilisateur  est requis.</span>
+          } -->
         </div>
 
         <!-- Adresse e-mail -->
@@ -89,18 +85,14 @@
           <label class="label-field">Adresse e-mail</label>
           <div class="input-wrap">
             <i class="bi bi-envelope input-icone"></i>
-            <input
-              type="email"
-              formControlName="email"
-              class="champ"
-              [class.champ-erreur]="email.invalid && email.touched"
-              placeholder="jean.dupont@exemple.com">
+            <input type="email" formControlName="email" class="champ"
+              [class.champ-erreur]="email.invalid && email.touched" placeholder="jean.dupont@exemple.com">
           </div>
           @if (email.invalid && email.touched) {
-            <span class="msg-erreur">
-              @if (email.errors?.['required']) { L'email est requis. }
-              @if (email.errors?.['email'])    { Format d'email invalide. }
-            </span>
+          <span class="msg-erreur">
+            @if (email.errors?.['required']) { L'email est requis. }
+            @if (email.errors?.['email']) { Format d'email invalide. }
+          </span>
           }
         </div>
 
@@ -109,81 +101,32 @@
           <label class="label-field">Numéro de téléphone</label>
           <div class="input-wrap">
             <i class="bi bi-telephone input-icone"></i>
-            <input
-              type="tel"
-              formControlName="telephone"
-              class="champ"
-              [class.champ-erreur]="telephone.invalid && telephone.touched"
-              placeholder="06 12 34 56 78">
+            <input type="tel" formControlName="telephone" class="champ"
+              [class.champ-erreur]="telephone.invalid && telephone.touched" placeholder="06 12 34 56 78">
           </div>
           @if (telephone.invalid && telephone.touched) {
-            <span class="msg-erreur">Le numéro de téléphone est requis.</span>
+          <span class="msg-erreur">Le numéro de téléphone est requis.</span>
           }
         </div>
 
-        <!-- Mot de passe + Confirmation (côte à côte) -->
-        <div class="row g-3 mb-3">
+        <div class="mb-3">
+          <label class="label-field">Numéro CNI</label>
 
-          <!-- Mot de passe -->
-          <div class="col-md-6">
-            <label class="label-field">Mot de passe</label>
-            <div class="input-wrap">
-              <i class="bi bi-lock input-icone"></i>
-              <input
-                [type]="afficherMdp() ? 'text' : 'password'"
-                formControlName="password"
-                class="champ champ-avec-toggle"
-                [class.champ-erreur]="password.invalid && password.touched"
-                placeholder="••••••••">
-              <button type="button" class="btn-toggle-mdp" (click)="afficherMdp.update(v => !v)">
-                <i [class]="'bi ' + (afficherMdp() ? 'bi-eye-slash' : 'bi-eye')"></i>
-              </button>
-            </div>
-            @if (password.invalid && password.touched) {
-              <span class="msg-erreur">
-                @if (password.errors?.['required'])  { Requis. }
-                @if (password.errors?.['minlength']) { 8 caractères min. }
-              </span>
-            }
+          <div class="input-wrap">
+            <i class="bi bi-card-text input-icone"></i>
+
+            <input type="text" formControlName="cni" class="champ" [class.champ-erreur]="cni.invalid && cni.touched"
+              placeholder="123456789">
           </div>
 
-          <!-- Confirmation -->
-          <div class="col-md-6">
-            <label class="label-field">Confirmer</label>
-            <div class="input-wrap">
-              <i class="bi bi-lock input-icone"></i>
-              <input
-                [type]="afficherMdpConfirm() ? 'text' : 'password'"
-                formControlName="passwordConfirm"
-                class="champ champ-avec-toggle"
-                [class.champ-erreur]="passwordConfirm.invalid && passwordConfirm.touched"
-                placeholder="••••••••">
-              <button type="button" class="btn-toggle-mdp" (click)="afficherMdpConfirm.update(v => !v)">
-                <i [class]="'bi ' + (afficherMdpConfirm() ? 'bi-eye-slash' : 'bi-eye')"></i>
-              </button>
-            </div>
-            @if (passwordConfirm.errors?.['nonIdentiques'] && passwordConfirm.touched) {
-              <span class="msg-erreur">Les mots de passe ne correspondent pas.</span>
-            }
-          </div>
+          @if (cni.invalid && cni.touched) {
+          <span class="msg-erreur">
+            Le numéro CNI est requis.
+          </span>
+          }
         </div>
-
         <!-- Conditions d'utilisation -->
-        <div class="mb-4">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="conditions" class="checkbox-input">
-            <span class="checkbox-custom"></span>
-            <span>
-              J'accepte les
-              <a href="#" class="lien-bleu">conditions d'utilisation</a>
-              et la
-              <a href="#" class="lien-bleu">politique de confidentialité</a>
-            </span>
-          </label>
-          @if (conditions.invalid && conditions.touched) {
-            <span class="msg-erreur d-block mt-1">Vous devez accepter les conditions.</span>
-          }
-        </div>
+       
 
         <!-- Bouton créer compte -->
         <button type="submit" class="btn-creer">
@@ -193,23 +136,10 @@
       </form>
 
       <!-- Séparateur "OU CONTINUER AVEC" -->
-      <div class="separateur-ou my-4">OU CONTINUER AVEC</div>
+     
 
       <!-- Boutons sociaux -->
-      <div class="row g-3 mb-4">
-        <div class="col-6">
-          <button class="btn-social">
-            <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
-            Google
-          </button>
-        </div>
-        <div class="col-6">
-          <button class="btn-social">
-            <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" width="18">
-            Microsoft
-          </button>
-        </div>
-      </div>
+      
 
       <!-- Lien connexion -->
       <p class="text-center text-muted" style="font-size:.875rem">

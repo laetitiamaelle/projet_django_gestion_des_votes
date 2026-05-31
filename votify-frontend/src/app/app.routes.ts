@@ -54,7 +54,44 @@ export const routes: Routes = [
         .then(m => m.AdminDashboardComponent),
     title: 'Tableau de bord Admin — Votify'
   },
+{
+    path: 'admin/creer-scrutin',
+    loadComponent: () =>
+      import('./pages/creer-scrutin/creer-scrutin')
+        .then(m => m.CreerScrutinComponent),
+    title: 'Créer un scrutin — Votify'
+  },
+  {
+    path: 'admin/candidats',
+    loadComponent: () =>
+      import('./pages/candidats/candidats')
+        .then(m => m.CandidatsComponent),
+    title: 'Gestion candidats — Votify'
+  },
 
-  // Redirection par défaut
+  // ── Électeur ─────────────────────────────────────────
+  {
+    path: 'electeur',
+    loadComponent: () =>
+      import('./pages/rechercher-scrutin/rechercher-scrutin')
+        .then(m => m.RechercherScrutinComponent),
+    title: 'Explorer les scrutins — Votify'
+  },
+  {
+    path: 'electeur/mes-scrutins',
+    loadComponent: () =>
+      import('./pages/mes-scrutins/mes-scrutins')
+        .then(m => m.MesScrutinsComponent),
+    title: 'Mes scrutins — Votify'
+  },
+  {
+    path: 'electeur/resultats',
+    loadComponent: () =>
+      import('./pages/resultats/resultats')
+        .then(m => m.ResultatsComponent),
+    title: 'Résultats — Votify'
+  },
+
+  // ── Fallback ─────────────────────────────────────────
   { path: '**', redirectTo: '' }
 ];

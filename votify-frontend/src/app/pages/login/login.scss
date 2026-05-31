@@ -52,7 +52,7 @@ $gray:      #6b7280;
 // Bloc central du panneau gauche
 .gauche-contenu {
   text-align: center;
-  padding: 0 2rem;
+ 
 }
 
 // Cercle avec icône
@@ -68,6 +68,8 @@ $gray:      #6b7280;
   font-size: 2.2rem;
   color: white;
   margin: 0 auto 2rem;
+  top: -150px;
+  position:relative;
 }
 
 .gauche-titre {
@@ -77,6 +79,8 @@ $gray:      #6b7280;
   letter-spacing: -0.03em;
   line-height: 1.15;
   margin-bottom: 1rem;
+  top: -150px;
+  position:relative;
 }
 
 .gauche-desc {
@@ -84,6 +88,8 @@ $gray:      #6b7280;
   font-size: 0.95rem;
   line-height: 1.7;
   margin: 0;
+  top: -150px;
+  position:relative;
 }
 
 // Badge sécurité en bas du panneau gauche

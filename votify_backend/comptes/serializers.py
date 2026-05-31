@@ -10,7 +10,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'username',
+            'first_name',
             'email',
             'telephone',
             'cni'
@@ -21,7 +21,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         generated_password = generate_password()
 
         user = User.objects.create_user(
-            username=validated_data['username'],
+            username=validated_data['first_name'],
             email=validated_data['email'],
             password=generated_password,
             telephone=validated_data.get('telephone'),
@@ -39,7 +39,7 @@ Votre compte a été créé avec succès sur l'application votify.
 
 Vos paramètres de connexion :
 
-Username : {user.username}
+email : {user.email}
 Mot de passe : {generated_password}
 
 Veuillez modifier votre mot de passe après votre première connexion.
@@ -60,10 +60,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id',
-            'username',
+            'first_name',
             'email',
-            'role',
             'telephone',
+            'cni',
+            'role',
             'must_change_password'
         ]
 
@@ -82,3 +83,25 @@ class DemandeAdminSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
         read_only_fields = ['statut', 'date_creation']
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # On peut ajouter des données personnalisées dans le jeton si besoin
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # C'est ici qu'on ajoute l'objet 'user' dans la réponse JSON !
+        data['user'] = {
+            'id': self.user.id,
+            'email': self.user.email,
+            'role': getattr(self.user, 'role', 'electeur'),
+            'is_superuser': self.user.is_superuser
+        }
+        return data

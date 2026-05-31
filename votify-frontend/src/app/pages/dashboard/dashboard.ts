@@ -64,9 +64,7 @@ export class DashboardComponent {
     { label: 'Tableau de bord',   icone: 'bi-grid-1x2-fill',    route: 'dashboard',       actif: true  },
     { label: 'Demandes admins',   icone: 'bi-person-plus-fill',  route: 'demandes',        actif: false },
     { label: 'Administrateurs',   icone: 'bi-people-fill',       route: 'administrateurs', actif: false },
-    { label: 'Tous les scrutins', icone: 'bi-clipboard2-check',  route: 'scrutins',        actif: false },
-    { label: 'Statistiques',      icone: 'bi-bar-chart-fill',    route: 'statistiques',    actif: false },
-    { label: 'Paramètres',        icone: 'bi-gear-fill',         route: 'parametres',      actif: false },
+    
   ];
 
   // ── Données fictives : cartes statistiques ────────────
