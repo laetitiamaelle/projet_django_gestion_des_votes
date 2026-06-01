@@ -140,8 +140,142 @@ Veuillez modifier votre mot de passe après connexion.
             'message': 'Compte administrateur créé avec succès'
         })
     
+
+# refuser demande 
+
+class RefuserDemandeAdminView(APIView):
+
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request, pk):
+
+        demande = DemandeAdmin.objects.get(id=pk)
+
+        demande.statut = 'refusee'
+        demande.save()
+
+        send_mail(
+            subject='Demande administrateur refusée',
+            message=f'''
+Bonjour {demande.nom},
+
+Votre demande d'accès administrateur à Votify
+a été refusée.
+
+Vous pouvez contacter le support
+pour plus d'informations au 693823659.
+
+Votify.
+''',
+            from_email='laetitiamaelle740@gmail.com',
+            recipient_list=[demande.email],
+            fail_silently=False
+        )
+
+        return Response({
+            'message': 'Demande refusée'
+        })
+    
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+# creer un admin directement 
+# Vue pour la création directe d'un administrateur par le SuperAdmin
+class CreerAdminDirectView(APIView):
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request):
+        nom = request.data.get('username')
+        email = request.data.get('email')
+        telephone = request.data.get('telephone')
+        cni = request.data.get('cni')
+
+        if not nom or not email:
+            return Response(
+                {'error': 'Le nom d’utilisateur et l’email sont obligatoires'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {'error': 'Un utilisateur avec cet email existe déjà'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        password = generate_password()
+
+        utilisateur = User.objects.create_user(
+            username=nom,
+            email=email,
+            password=password,
+            role='admin',
+            telephone=telephone,
+            cni=cni,
+            must_change_password=True
+        )
+
+        # Envoi de l'email avec les accès
+        send_mail(
+            subject='Votre compte Administrateur Votify',
+            message=f'''Bonjour {nom},
+
+Un compte administrateur a été créé pour vous par le Super Administrateur sur l'application Votify.
+
+Vos paramètres de connexion :
+Email : {email}
+Mot de passe temporaire : {password}
+
+Veuillez modifier votre mot de passe dès votre première connexion.
+''',
+            from_email='laetitiamaelle740@gmail.com',
+            recipient_list=[email],
+            fail_silently=False
+        )
+
+        return Response({
+            'message': 'Compte administrateur créé avec succès',
+            'user': {
+                'id': utilisateur.id,
+                'username': utilisateur.username,
+                'email': utilisateur.email,
+                'role': utilisateur.role
+            }
+        }, status=status.HTTP_201_CREATED)
+    
+    # Voir la liste de tous les comptes administrateurs créés
+class ListeAdministrateursView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsSuperAdmin]
+
+    def get_queryset(self):
+        # On filtre la table User pour ne retourner que les comptes avec le rôle admin
+        return User.objects.filter(role='admin')
+    
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def toggle_statut_admin(request, pk):
+    try:
+        # On récupère l'admin
+        administrateur = User.objects.get(pk=pk, role='admin')
+    except User.DoesNotExist:
+        return Response({"error": "Administrateur non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Inversion pure et simple du statut actuel
+    administrateur.is_active = not administrateur.is_active
+    administrateur.save()
+
+    return Response({
+        "message": "Statut mis à jour avec succès",
+        "is_active": administrateur.is_active  # On renvoie le nouvel état réel
+    }, status=status.HTTP_200_OK)

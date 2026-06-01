@@ -61,6 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'first_name',
+            'username',
             'email',
             'telephone',
             'cni',
@@ -88,12 +89,18 @@ class DemandeAdminSerializer(serializers.ModelSerializer):
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        # On peut ajouter des données personnalisées dans le jeton si besoin
-        return token
-
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # On ajoute le username dans les données renvoyées lors de la connexion
+        data['user'] = {
+            'id': self.user.id,
+            'email': self.user.email,
+            'username': self.user.username,  # 🌟 C'EST CETTE LIGNE QU'IL FAUT RAJOUTER
+            'role': getattr(self.user, 'role', 'electeur'),
+            'is_superuser': self.user.is_superuser
+        }
+        return data
     def validate(self, attrs):
         data = super().validate(attrs)
         

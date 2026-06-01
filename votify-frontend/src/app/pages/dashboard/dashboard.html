@@ -1,17 +1,6 @@
-<!-- ============================================================
-     DASHBOARD SUPERADMIN — dashboard.component.html
-     Layout : Sidebar fixe gauche + Contenu scrollable droite
-     Fidèle à la maquette Visily fournie.
-     ============================================================ -->
-
 <div class="dashboard-wrapper">
 
-  <!-- ══════════════════════════════════════════════════════
-       SIDEBAR
-       ══════════════════════════════════════════════════════ -->
   <aside class="sidebar">
-
-    <!-- Logo -->
     <a href="/" class="sidebar-brand">
       <div class="sidebar-logo-icon">
         <i class="bi bi-check2-square"></i>
@@ -19,22 +8,16 @@
       <span class="sidebar-logo-text">Votify</span>
     </a>
 
-    <!-- Navigation -->
     <nav class="sidebar-nav">
       @for (item of navItems; track item.route) {
-        <a
-          class="sidebar-lien"
-          [class.actif]="item.actif"
-          (click)="setOnglet(item.route)"
-          href="javascript:void(0)">
-          <i [class]="'bi ' + item.icone"></i>
-          <span>{{ item.label }}</span>
-        </a>
+      <a class="sidebar-lien" [class.actif]="item.actif" (click)="setOnglet(item.route)" href="javascript:void(0)">
+        <i [class]="'bi ' + item.icone"></i>
+        <span>{{ item.label }}</span>
+      </a>
       }
     </nav>
 
-    <!-- Bouton déconnexion -->
-    <button class="btn-deconnexion">
+    <button (click)="onLogout()" class="btn-deconnexion">
       <i class="bi bi-box-arrow-left text-danger"></i>
       <span>Déconnexion</span>
     </button>
@@ -42,74 +25,51 @@
     <p class="sidebar-copyright">© 2026 Votify. Tous droits réservés.</p>
   </aside>
 
-  <!-- ══════════════════════════════════════════════════════
-       ZONE PRINCIPALE
-       ══════════════════════════════════════════════════════ -->
   <div class="main-zone">
 
-    <!-- ── Topbar ─────────────────────────────────────── -->
     <header class="topbar">
-      <h6 class="topbar-titre">Tableau de bord SUPERADMIN</h6>
-      <div class="topbar-droite">
-        <!-- Barre de recherche -->
-        <div class="recherche-box">
-          <i class="bi bi-search"></i>
-          <input type="text" placeholder="Rechercher...">
-        </div>
-        <!-- Cloche notifications -->
-        <button class="btn-notif">
-          <i class="bi bi-bell"></i>
-          <span class="notif-badge">3</span>
-        </button>
-        <!-- Avatar utilisateur -->
-        <div class="avatar-topbar">SA</div>
+      <div class="avatar-topbar">
+        {{ superAdmin?.username?.charAt(0)?.toUpperCase() }}
       </div>
+      <h6 class="topbar-titre">Tableau de bord SUPERADMIN</h6>
+      <div class="topbar-droite"></div>
     </header>
 
-    <!-- ── Contenu scrollable ─────────────────────────── -->
     <main class="main-contenu">
 
-      <!-- En-tête de bienvenue -->
       <div class="bienvenue mb-4">
-        <h3 class="bienvenue-titre">Bonjour, Alexandre</h3>
+        <h3 class="bienvenue-titre">Bonjour, {{ superAdmin?.username }}</h3>
         <p class="bienvenue-sous-titre">
           Voici un aperçu de l'activité de votre plateforme aujourd'hui.
         </p>
       </div>
 
-      <!-- ────────────────────────────────────────────────
-           CARTES STATISTIQUES
-           ──────────────────────────────────────────────── -->
       <div class="row g-3 mb-4">
         @for (stat of stats; track stat.titre) {
-          <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-              <div class="stat-card-body">
-                <div>
-                  <p class="stat-card-titre">{{ stat.titre }}</p>
-                  <h3 class="stat-card-valeur">
-                    {{ stat.valeur }}
-                    @if (stat.variation) {
-                      <span class="stat-variation"
-                            [class.positif]="stat.variationPositive">
-                        {{ stat.variation }}
-                      </span>
-                    }
-                  </h3>
-                  <p class="stat-card-desc">{{ stat.sousTitre }}</p>
-                </div>
-                <div class="stat-card-icone">
-                  <i [class]="'bi ' + stat.icone"></i>
-                </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div>
+                <p class="stat-card-titre">{{ stat.titre }}</p>
+                <h3 class="stat-card-valeur">
+                  {{ stat.valeur }}
+                  @if (stat.variation) {
+                  <span class="stat-variation" [class.positif]="stat.variationPositive">
+                    {{ stat.variation }}
+                  </span>
+                  }
+                </h3>
+                <p class="stat-card-desc">{{ stat.sousTitre }}</p>
+              </div>
+              <div class="stat-card-icone">
+                <i [class]="'bi ' + stat.icone"></i>
               </div>
             </div>
           </div>
+        </div>
         }
       </div>
 
-      <!-- ────────────────────────────────────────────────
-           TABLEAU — DEMANDES ADMINISTRATEURS
-           ──────────────────────────────────────────────── -->
       <div class="tableau-card mb-4">
         <div class="tableau-header">
           <div>
@@ -125,8 +85,9 @@
           <table class="table table-hover align-middle mb-0">
             <thead>
               <tr>
-                <th>CANDIDAT</th>
-                <th>ORGANISATION</th>
+                <th>CANDIDAT / EMAIL</th>
+                <th>CNI</th>
+                <th>TÉLÉPHONE</th>
                 <th>DATE DE DEMANDE</th>
                 <th>STATUT</th>
                 <th>ACTIONS</th>
@@ -134,69 +95,63 @@
             </thead>
             <tbody>
               @for (d of demandes; track d.id) {
-                <tr>
-                  <!-- Candidat avec avatar initiales -->
-                  <td>
-                    <div class="d-flex align-items-center gap-2">
-                      <div class="avatar-initiales">{{ d.initiales }}</div>
-                      <span class="fw-medium">{{ d.prenom }} {{ d.nom }}</span>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-initiales">
+                      {{ d.nom ? d.nom.charAt(0).toUpperCase() : 'A' }}
                     </div>
-                  </td>
-                  <!-- Organisation -->
-                  <td>
-                    <span class="d-flex align-items-center gap-1 text-muted">
-                      <i class="bi bi-building"></i>
-                      {{ d.organisation }}
-                    </span>
-                  </td>
-                  <!-- Date -->
-                  <td>
-                    <span class="d-flex align-items-center gap-1 text-muted">
-                      <i class="bi bi-calendar3"></i>
-                      {{ d.date }}
-                    </span>
-                  </td>
-                  <!-- Statut -->
-                  <td>
-                    @if (d.statut === 'en_attente') {
-                      <span class="badge-statut en-attente">À réviser</span>
-                    } @else if (d.statut === 'validee') {
-                      <span class="badge-statut validee">Validée</span>
-                    } @else {
-                      <span class="badge-statut refusee">Refusée</span>
-                    }
-                  </td>
-                  <!-- Actions -->
-                  <td>
-                    @if (d.statut === 'en_attente') {
-                      <div class="d-flex gap-2">
-                        <button
-                          class="btn-action valider"
-                          (click)="validerDemande(d.id)"
-                          title="Valider">
-                          <i class="bi bi-check-lg"></i>
-                        </button>
-                        <button
-                          class="btn-action refuser"
-                          (click)="refuserDemande(d.id)"
-                          title="Refuser">
-                          <i class="bi bi-x-lg"></i>
-                        </button>
-                      </div>
-                    } @else {
-                      <span class="text-muted small">Traité</span>
-                    }
-                  </td>
-                </tr>
+                    <div>
+                      <span class="fw-medium d-block">{{ d.nom }}</span>
+                      <small class="text-muted">{{ d.email }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="d-flex align-items-center gap-1 text-muted">
+                    <i class="bi bi-card-text"></i>
+                    {{ d.cni || 'N/A' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="text-muted">{{ d.telephone }}</span>
+                </td>
+                <td>
+                  <span class="d-flex align-items-center gap-1 text-muted">
+                    <i class="bi bi-calendar3"></i>
+                    {{ d.date_creation | date:'dd/MM/yyyy' }}
+                  </span>
+                </td>
+                <td>
+                  @if (d.statut === 'en_attente') {
+                  <span class="badge-statut en-attente">À réviser</span>
+                  } @else if (d.statut === 'acceptee') {
+                  <span class="badge-statut validee">Validée</span>
+                  } @else {
+                  <span class="badge-statut refusee">Refusée</span>
+                  }
+                </td>
+                <td>
+                  @if (d.statut === 'en_attente') {
+                  <div class="d-flex gap-2">
+                    <button class="btn-action valider" (click)="validerDemande(d.id)" title="Valider">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                    <button class="btn-action refuser" (click)="refuserDemande(d.id)" title="Refuser">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  } @else {
+                  <span class="text-muted small">Traité</span>
+                  }
+                </td>
+              </tr>
               }
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- ────────────────────────────────────────────────
-           TABLEAU — GESTION DES ADMINISTRATEURS
-           ──────────────────────────────────────────────── -->
       <div class="tableau-card">
         <div class="tableau-header">
           <div>
@@ -205,11 +160,56 @@
               Consultez et gérez les droits des administrateurs actifs.
             </p>
           </div>
-          <div class="d-flex gap-2">
-            <button class="btn-ajouter">
-              <i class="bi bi-plus-lg"></i> Ajouter
-            </button>
+          <button class="btn btn-primary" (click)="ouvrirModal()">
+            <i class="bi bi-plus-lg"></i> Nouveau Administrateur
+          </button>
+
+          @if (afficherModal) {
+          <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Créer un Nouvel Administrateur</h5>
+                  <button type="button" class="btn-close" (click)="fermerModal()"></button>
+                </div>
+
+                <form [formGroup]="adminForm" (ngSubmit)="soumettreAdmin()">
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">Nom d'utilisateur</label>
+                      <input type="text" class="form-control" formControlName="username" placeholder="Ex: Jean Dupont">
+                      @if (adminForm.get('username')?.touched && adminForm.get('username')?.invalid) {
+                      <small class="text-danger">Le nom d'utilisateur est requis.</small>
+                      }
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" formControlName="email" placeholder="exemple@votify.com">
+                      @if (adminForm.get('email')?.touched && adminForm.get('email')?.invalid) {
+                      <small class="text-danger">Veuillez entrer un email valide.</small>
+                      }
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Téléphone</label>
+                      <input type="text" class="form-control" formControlName="telephone" placeholder="Ex: 693823659">
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Numéro CNI</label>
+                      <input type="text" class="form-control" formControlName="cni" placeholder="Numéro de carte d'identité">
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+                    <button type="submit" class="btn btn-success" [disabled]="adminForm.invalid">Créer le compte</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
+          }
         </div>
 
         <div class="table-responsive">
@@ -217,56 +217,47 @@
             <thead>
               <tr>
                 <th>ADMIN</th>
-                <th>ORGANISATION</th>
-                <th>DERNIÈRE ACTIVITÉ</th>
+                <th>EMAIL</th>
+                <th>TÉLÉPHONE</th>
                 <th>STATUT</th>
                 <th>CONTRÔLE</th>
               </tr>
             </thead>
             <tbody>
               @for (admin of administrateurs; track admin.id) {
-                <tr>
-                  <!-- Admin avec avatar et point de statut -->
-                  <td>
-                    <div class="d-flex align-items-center gap-2">
-                      <div class="avatar-initiales position-relative">
-                        {{ admin.initiales }}
-                        <span class="point-statut"
-                              [class.actif]="admin.actif"
-                              [class.inactif]="!admin.actif">
-                        </span>
-                      </div>
-                      <span class="fw-medium">{{ admin.prenom }} {{ admin.nom }}</span>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-initiales position-relative">
+                      {{ admin.username ? admin.username.charAt(0).toUpperCase() : 'A' }}
+                      <span class="point-statut" [class.actif]="admin.is_active" [class.inactif]="!admin.is_active"></span>
                     </div>
-                  </td>
-                  <td class="text-muted">{{ admin.organisation }}</td>
-                  <td class="text-muted">{{ admin.derniereActivite }}</td>
-                  <!-- Statut actif/suspendu -->
-                  <td>
-                    @if (admin.actif) {
-                      <span class="badge-statut validee">Actif</span>
+                    <span class="fw-medium">{{ admin.username }}</span>
+                  </div>
+                </td>
+                <td class="text-muted">{{ admin.email }}</td>
+                <td class="text-muted">{{ admin.telephone || 'Non renseigné' }}</td>
+                <td>
+                  @if (admin.is_active) {
+                  <span class="badge-statut validee">Actif</span>
+                  } @else {
+                  <span class="badge-statut refusee">Suspendu</span>
+                  }
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    @if (admin.is_active) {
+                    <button class="btn-controle desactiver" (click)="toggleStatutAdmin(admin)">
+                      <i class="bi bi-slash-circle"></i> Désactiver
+                    </button>
                     } @else {
-                      <span class="badge-statut suspendu">Suspendu</span>
+                    <button class="btn-controle reactiver" (click)="toggleStatutAdmin(admin)">
+                      <i class="bi bi-arrow-counterclockwise"></i> Réactiver
+                    </button>
                     }
-                  </td>
-                  <!-- Boutons de contrôle -->
-                  <td>
-                    <div class="d-flex align-items-center gap-2">
-                      @if (admin.actif) {
-                        <button class="btn-controle desactiver">
-                          <i class="bi bi-slash-circle"></i> Désactiver
-                        </button>
-                      } @else {
-                        <button class="btn-controle reactiver">
-                          <i class="bi bi-arrow-counterclockwise"></i> Réactiver
-                        </button>
-                      }
-                      <button class="btn-dots">
-                        <i class="bi bi-three-dots-vertical"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                  </div>
+                </td>
+              </tr>
               }
             </tbody>
           </table>
@@ -275,7 +266,6 @@
 
     </main>
 
-    <!-- Footer dashboard -->
     <footer class="dashboard-footer">
       © 2026 Votify. Tous droits réservés. Sécurisé par chiffrement de bout en bout.
     </footer>

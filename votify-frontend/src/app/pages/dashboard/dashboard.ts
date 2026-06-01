@@ -3,11 +3,14 @@
 //
 // RÔLE : Dashboard superadmin avec sidebar, cartes stats,
 //        tableau des demandes et tableau des administrateurs.
-//        Toutes les données sont fictives (pas d'appel API).
 // ============================================================
 
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { OnInit } from '@angular/core';
+// 🌟 MODIFICATION : Ajout des imports nécessaires pour les formulaires réactifs
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { SuperAdminService } from '../../services/superadmin';
 
 // ── Interfaces pour typer les données fictives ────────────
 
@@ -20,24 +23,26 @@ interface StatCard {
   icone: string;
 }
 
+// 🌟 MODIFICATION : Alignement de l'interface avec le modèle Django DemandeAdmin
 interface DemandeAdmin {
   id: number;
-  prenom: string;
   nom: string;
-  organisation: string;
-  date: string;
-  statut: 'en_attente' | 'validee' | 'refusee';
-  initiales: string;
+  email: string;
+  telephone: string;
+  cni: string;
+  statut: 'en_attente' | 'acceptee' | 'refusee'; // 'acceptee' match ton backend
+  date_creation: string;
 }
 
+// 🌟 MODIFICATION : Alignement de l'interface Administrateur avec ton modèle User Django
 interface Administrateur {
   id: number;
-  prenom: string;
-  nom: string;
-  organisation: string;
-  derniereActivite: string;
-  actif: boolean;
-  initiales: string;
+  username: string;
+  email: string;
+  telephone?: string;
+  cni?: string;
+  role: string;
+  is_active: boolean; // Utilisation du champ natif de Django
 }
 
 interface NavItem {
@@ -50,21 +55,24 @@ interface NavItem {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  // 🌟 MODIFICATION : Ajout de ReactiveFormsModule dans les imports du composant pour faire fonctionner le formulaire HTML
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
-export class DashboardComponent {
-
-  // Onglet actif de la sidebar (pour simuler la navigation)
+export class DashboardComponent implements OnInit {
+  superAdmin: any = {};
   ongletActif = 'dashboard';
+
+  // 🌟 MODIFICATION : Ajout des propriétés pour gérer la visibilité de la modal et le formulaire réactif
+  adminForm!: FormGroup;
+  afficherModal: boolean = false;
 
   // ── Données fictives : navigation sidebar ─────────────
   navItems: NavItem[] = [
-    { label: 'Tableau de bord',   icone: 'bi-grid-1x2-fill',    route: 'dashboard',       actif: true  },
-    { label: 'Demandes admins',   icone: 'bi-person-plus-fill',  route: 'demandes',        actif: false },
-    { label: 'Administrateurs',   icone: 'bi-people-fill',       route: 'administrateurs', actif: false },
-    
+    { label: 'Tableau de bord', icone: 'bi-grid-1x2-fill', route: 'dashboard', actif: true },
+    { label: 'Demandes admins', icone: 'bi-person-plus-fill', route: 'demandes', actif: false },
+    { label: 'Administrateurs', icone: 'bi-people-fill', route: 'administrateurs', actif: false },
   ];
 
   // ── Données fictives : cartes statistiques ────────────
@@ -99,38 +107,180 @@ export class DashboardComponent {
     },
   ];
 
-  // ── Données fictives : demandes administrateurs ───────
-  demandes: DemandeAdmin[] = [
-    { id: 1, prenom: 'Marc',     nom: 'Dubois',  organisation: 'Université Sorbonne',   date: '12 Oct 2023', statut: 'en_attente', initiales: 'MD' },
-    { id: 2, prenom: 'Sophie',   nom: 'Laurent', organisation: 'Amnesty International', date: '11 Oct 2023', statut: 'en_attente', initiales: 'SL' },
-    { id: 3, prenom: 'Jean-Luc', nom: 'Picard',  organisation: 'Starfleet Academy',     date: '10 Oct 2023', statut: 'en_attente', initiales: 'JP' },
-  ];
-
-  // ── Données fictives : administrateurs ────────────────
-  administrateurs: Administrateur[] = [
-    { id: 1, prenom: 'Amélie',  nom: 'Poulain',  organisation: 'École des Beaux-Arts', derniereActivite: 'Il y a 2h',      actif: true,  initiales: 'AP' },
-    { id: 2, prenom: 'Thomas',  nom: 'Pesquet',  organisation: 'ESA Lyon',             derniereActivite: 'Il y a 5 min',   actif: true,  initiales: 'TP' },
-    { id: 3, prenom: 'Marie',   nom: 'Curie',    organisation: 'Institut du Radium',   derniereActivite: 'Hier',           actif: true,  initiales: 'MC' },
-    { id: 4, prenom: 'Victor',  nom: 'Hugo',     organisation: 'Mairie de Paris',      derniereActivite: 'Il y a 1 mois',  actif: false, initiales: 'VH' },
-  ];
-
-  // ── Actions fictives (simulation sans API) ────────────
-
-  // Simuler validation d'une demande
-  validerDemande(id: number): void {
-    const demande = this.demandes.find(d => d.id === id);
-    if (demande) demande.statut = 'validee';
+  // 🌟 MODIFICATION : Injection de FormBuilder dans le constructeur et initialisation des règles de validation du formulaire
+  constructor(
+    private superAdminService: SuperAdminService,
+    private fb: FormBuilder
+  ) { 
+    this.adminForm = this.fb.group({
+      username: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      telephone: [''],
+      cni: ['']
+    });
   }
 
-  // Simuler refus d'une demande
+  demandes: DemandeAdmin[] = [];
+  administrateurs: Administrateur[] = [];
+
+  // validation d'une demande
+  validerDemande(id: number): void {
+    this.superAdminService
+      .validerDemande(id)
+      .subscribe({
+        next: () => {
+          this.demandes = this.demandes.filter(d => d.id !== id);
+        },
+        error: (err) => {
+          console.error(err);
+        }
+      });
+  }
+
+  // refus d'une demande
   refuserDemande(id: number): void {
-    const demande = this.demandes.find(d => d.id === id);
-    if (demande) demande.statut = 'refusee';
+    this.superAdminService
+      .refuserDemande(id)
+      .subscribe({
+        next: () => {
+          this.demandes = this.demandes.filter(d => d.id !== id);
+        },
+        error: (err) => {
+          console.error(err);
+        }
+      });
   }
 
   // Changer l'onglet actif dans la sidebar
   setOnglet(route: string): void {
     this.ongletActif = route;
     this.navItems.forEach(item => item.actif = item.route === route);
+  }
+
+  ngOnInit(): void {
+    // 1. Récupération des demandes sécurisée
+    this.superAdminService.getDemandes()
+      .subscribe({
+        next: (data: any) => {
+          console.log("Données reçues pour DEMANDES :", data);
+          if (Array.isArray(data)) {
+            this.demandes = data;
+          } else if (data && Array.isArray(data.results)) {
+            this.demandes = data.results;
+          } else {
+            this.demandes = [];
+            console.warn("getDemandes n'a pas renvoyé un tableau. Format corrigé en [].");
+          }
+        },
+        error: (err) => {
+          console.error("Erreur getDemandes :", err);
+          this.demandes = [];
+        }
+      });
+
+    // 2. Récupération du profil
+    this.superAdminService.getProfile()
+      .subscribe({
+        next: (data: any) => {
+          this.superAdmin = data;
+        },
+        error: (err) => {
+          console.error("Erreur getProfile :", err);
+        }
+      });
+
+    // 3. Récupération des administrateurs sécurisée
+    this.rafraichirAdmins();
+  }
+
+  // 🌟 MODIFICATION : factorisation de la récupération des admins pour pouvoir la réutiliser après une création directe
+  rafraichirAdmins(): void {
+    this.superAdminService.getAdmins()
+      .subscribe({
+        next: (data: any) => {
+          console.log("Données reçues pour ADMINS :", data);
+          if (Array.isArray(data)) {
+            this.administrateurs = data;
+          } else if (data && Array.isArray(data.results)) {
+            this.administrateurs = data.results;
+          } else {
+            this.administrateurs = [];
+            console.warn("getAdmins n'a pas renvoyé un tableau. Format corrigé en [].");
+          }
+        },
+        error: (err) => {
+          console.error("Erreur getAdmins :", err);
+          this.administrateurs = [];
+        }
+      });
+  }
+
+  // Déconnexion
+  onLogout(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_email');
+    window.location.href = '/login';
+  }
+
+  chargerDemandes() {
+    this.superAdminService.getDemandes()
+      .subscribe({
+        next: (data: any) => {
+          if (Array.isArray(data)) {
+            this.demandes = data;
+          } else if (data && Array.isArray(data.results)) {
+            this.demandes = data.results;
+          } else {
+            this.demandes = [];
+          }
+        },
+        error: (err) => {
+          console.log(err);
+          this.demandes = [];
+        }
+      });
+  }
+  // Active ou désactive un administrateur à l'écran
+// 🌟 MODIFICATION : Gestion de l'activation/désactivation
+  toggleStatutAdmin(admin: any): void {
+  // On appelle le service (qui pointe vers notre vue Django modifiée)
+  this.superAdminService.modifierStatutAdmin(admin.id, !admin.is_active).subscribe({
+    next: (response) => {
+      // On applique la réponse réelle renvoyée par le serveur Django
+      admin.is_active = response.is_active;
+      console.log(`L'admin est maintenant : ${admin.is_active ? 'Actif' : 'Suspendu'}`);
+    },
+    error: (err) => {
+      console.error("Erreur lors du changement de statut", err);
+      alert("Impossible de modifier le statut.");
+    }
+  });
+}
+  // MODIFICATION : Ajout des méthodes d'ouverture / fermeture de la modal
+  ouvrirModal(): void {
+    this.adminForm.reset();
+    this.afficherModal = true;
+  }
+
+  fermerModal(): void {
+    this.afficherModal = false;
+  }
+
+  // MODIFICATION : Ajout de la méthode de soumission pour créer l'administrateur en appelant le service
+  soumettreAdmin(): void {
+    if (this.adminForm.valid) {
+      this.superAdminService.creerAdminDirect(this.adminForm.value).subscribe({
+        next: (response:any) => {
+          alert(response.message || "Administrateur créé avec succès !");
+          this.fermerModal();
+          this.rafraichirAdmins(); // Actualise le tableau instantanément à l'écran
+        },
+        error: (err:any) => {
+          console.error(err);
+          alert(err.error?.error || "Une erreur est survenue lors de la création.");
+        }
+      });
+    }
   }
 }
