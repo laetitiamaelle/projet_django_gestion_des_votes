@@ -73,8 +73,8 @@ export const routes: Routes = [
   {
     path: 'electeur',
     loadComponent: () =>
-      import('./pages/rechercher-scrutin/rechercher-scrutin')
-        .then(m => m.RechercherScrutinComponent),
+      import('./pages/electeur-dashboard/electeur-dashboard')
+        .then(m => m.ElecteurDashboardComponent),
     title: 'Explorer les scrutins — Votify'
   },
   {
@@ -91,7 +91,13 @@ export const routes: Routes = [
         .then(m => m.ResultatsComponent),
     title: 'Résultats — Votify'
   },
-
+  {
+    path: 'electeur/detail-scrutin',
+    loadComponent: () =>
+      import('./pages/detail-scrutin/detail-scrutin')
+        .then(m => m.DetailScrutinComponent),
+    title: 'Détail scrutin — Votify'
+  },
   // ── Fallback ─────────────────────────────────────────
   { path: '**', redirectTo: '' }
 ];

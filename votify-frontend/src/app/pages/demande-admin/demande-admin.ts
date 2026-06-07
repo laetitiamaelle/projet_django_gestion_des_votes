@@ -5,12 +5,12 @@
 // RÔLE : Formulaire de demande de compte administrateur.
 //        S'ouvre quand l'utilisateur clique sur
 //        "Demander un compte administrateur" depuis l'accueil.
-//        Pas d'appel API — visuel uniquement.
 // ============================================================
 
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DemandeAdminService } from '../../services/demande-admin';
 
 @Component({
   selector: 'app-demande-admin',
@@ -27,9 +27,8 @@ export class DemandeAdminComponent {
   // Formulaire réactif avec tous les champs de la maquette
   demandeForm: FormGroup;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private demandeAdminService: DemandeAdminService) {
     this.demandeForm = this.fb.group({
-      // Validators.required = champ obligatoire
       nom:          ['', Validators.required],
       email:        ['', [Validators.required, Validators.email]],
       telephone:    ['', Validators.required],
@@ -48,16 +47,26 @@ export class DemandeAdminComponent {
   get motif()        { return this.demandeForm.get('motif')!;        }
 
   // Soumission du formulaire
-  onSubmit(): void {
-    if (this.demandeForm.invalid) {
-      this.demandeForm.markAllAsTouched();
-      return;
-    }
-    // TODO: Appel API Django plus tard
-    // Pour l'instant on simule un envoi réussi
-    console.log('Demande envoyée :', this.demandeForm.value);
-    this.envoye.set(true);
+ onSubmit(): void {
+
+  if (this.demandeForm.invalid) {
+    this.demandeForm.markAllAsTouched();
+    return;
   }
+
+  console.log("Données envoyées :", this.demandeForm.value);
+
+  this.demandeAdminService.creerDemande(this.demandeForm.value)
+    .subscribe({
+      next: (response) => {
+        console.log("Réponse backend :", response);
+        this.envoye.set(true);
+      },
+      error: (err: any) => {
+        console.error(err);
+      }
+    });
+}
 
   // Réinitialiser le formulaire
   nouvelleDemandeq(): void {

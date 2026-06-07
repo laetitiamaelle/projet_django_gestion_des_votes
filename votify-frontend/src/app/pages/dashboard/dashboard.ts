@@ -30,7 +30,9 @@ interface DemandeAdmin {
   email: string;
   telephone: string;
   cni: string;
-  statut: 'en_attente' | 'acceptee' | 'refusee'; // 'acceptee' match ton backend
+  organisation: string;
+  motif: string;
+  statut: 'en_attente' | 'acceptee' | 'refusee';
   date_creation: string;
 }
 
@@ -76,37 +78,7 @@ export class DashboardComponent implements OnInit {
   ];
 
   // ── Données fictives : cartes statistiques ────────────
-  stats: StatCard[] = [
-    {
-      titre: 'Total Scrutins',
-      valeur: '1 284',
-      variation: '+12%',
-      variationPositive: true,
-      sousTitre: 'Scrutins créés ce mois-ci',
-      icone: 'bi-clipboard2-check'
-    },
-    {
-      titre: 'Admins Actifs',
-      valeur: '342',
-      sousTitre: 'Comptes administrateurs validés',
-      icone: 'bi-people'
-    },
-    {
-      titre: 'Votes aujourd\'hui',
-      valeur: '18 492',
-      variation: '+5.2%',
-      variationPositive: true,
-      sousTitre: 'Participations enregistrées',
-      icone: 'bi-bar-chart-line'
-    },
-    {
-      titre: 'Demandes en attente',
-      valeur: '24',
-      sousTitre: 'Nouveaux dossiers à traiter',
-      icone: 'bi-person-plus'
-    },
-  ];
-
+ stats: StatCard[] = [];
   // 🌟 MODIFICATION : Injection de FormBuilder dans le constructeur et initialisation des règles de validation du formulaire
   constructor(
     private superAdminService: SuperAdminService,
@@ -201,6 +173,7 @@ export class DashboardComponent implements OnInit {
           console.log("Données reçues pour ADMINS :", data);
           if (Array.isArray(data)) {
             this.administrateurs = data;
+            this.mettreAJourStats();
           } else if (data && Array.isArray(data.results)) {
             this.administrateurs = data.results;
           } else {
@@ -229,6 +202,7 @@ export class DashboardComponent implements OnInit {
         next: (data: any) => {
           if (Array.isArray(data)) {
             this.demandes = data;
+            this.mettreAJourStats();
           } else if (data && Array.isArray(data.results)) {
             this.demandes = data.results;
           } else {
@@ -242,7 +216,7 @@ export class DashboardComponent implements OnInit {
       });
   }
   // Active ou désactive un administrateur à l'écran
-// 🌟 MODIFICATION : Gestion de l'activation/désactivation
+// MODIFICATION : Gestion de l'activation/désactivation
   toggleStatutAdmin(admin: any): void {
   // On appelle le service (qui pointe vers notre vue Django modifiée)
   this.superAdminService.modifierStatutAdmin(admin.id, !admin.is_active).subscribe({
@@ -283,4 +257,40 @@ export class DashboardComponent implements OnInit {
       });
     }
   }
+
+  mettreAJourStats(): void {
+
+  this.stats = [
+
+    {
+      titre: 'Total Scrutins',
+      valeur: '0',
+      sousTitre: 'Scrutins créés',
+      icone: 'bi-clipboard2-check'
+    },
+
+    {
+      titre: 'Total Admins',
+      valeur: this.administrateurs.length.toString(),
+      sousTitre: 'Administrateurs enregistrés',
+      icone: 'bi-people'
+    },
+
+    {
+      titre: 'Total Electeurs',
+      valeur: '0',
+      sousTitre: 'Electeurs inscrits',
+      icone: 'bi-person-vcard'
+    },
+
+    {
+      titre: 'Demandes en attente',
+      valeur: this.demandes.length.toString(),
+      sousTitre: 'Demandes à traiter',
+      icone: 'bi-person-plus'
+    }
+
+  ];
+
+}
 }

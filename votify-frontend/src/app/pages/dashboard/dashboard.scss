@@ -151,7 +151,18 @@ $sidebar-w:  210px;
   padding: 0 1.75rem;
   flex-shrink: 0;
 }
-
+.profil{
+  display: flex;
+  margin-top: 1em;
+}
+.poste{
+  margin-left: 2px;
+  margin-top: 4px;
+}
+.name{
+  color: #0c2d7b;
+  font-weight: bold;
+}
 .topbar-titre {
   font-weight: 600;
   color: $gray;

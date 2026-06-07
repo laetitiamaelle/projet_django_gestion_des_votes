@@ -28,12 +28,19 @@
   <div class="main-zone">
 
     <header class="topbar">
-      <div class="avatar-topbar">
-        {{ superAdmin?.username?.charAt(0)?.toUpperCase() }}
-      </div>
-      <h6 class="topbar-titre">Tableau de bord SUPERADMIN</h6>
+      <h6 class="topbar-titre">Tableau de bord </h6>
       <div class="topbar-droite"></div>
+      <div class="profil">
+        <div class="avatar-topbar">
+          {{ superAdmin?.username?.charAt(0)?.toUpperCase() }}
+        </div>
+        <div class="poste">
+          <p>SUPERADMIN/<span class="name">{{ superAdmin?.username }}</span></p>
+        </div>
+      </div>
     </header>
+
+
 
     <main class="main-contenu">
 
@@ -85,68 +92,92 @@
           <table class="table table-hover align-middle mb-0">
             <thead>
               <tr>
-                <th>CANDIDAT / EMAIL</th>
-                <th>CNI</th>
+                <th>NOM</th>
+                <th>EMAIL</th>
                 <th>TÉLÉPHONE</th>
-                <th>DATE DE DEMANDE</th>
-                <th>STATUT</th>
+                <th>CNI</th>
+                <th>ORGANISATION</th>
+                <th>MOTIF</th>
+                <th>DATE</th>
                 <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
+
               @for (d of demandes; track d.id) {
+
               <tr>
+
                 <td>
                   <div class="d-flex align-items-center gap-2">
                     <div class="avatar-initiales">
                       {{ d.nom ? d.nom.charAt(0).toUpperCase() : 'A' }}
                     </div>
-                    <div>
-                      <span class="fw-medium d-block">{{ d.nom }}</span>
-                      <small class="text-muted">{{ d.email }}</small>
-                    </div>
+
+                    <strong>{{ d.nom }}</strong>
                   </div>
                 </td>
+
                 <td>
-                  <span class="d-flex align-items-center gap-1 text-muted">
-                    <i class="bi bi-card-text"></i>
-                    {{ d.cni || 'N/A' }}
+                  {{ d.email }}
+                </td>
+
+                <td>
+                  {{ d.telephone }}
+                </td>
+
+                <td>
+                  {{ d.cni }}
+                </td>
+
+                <td>
+                  {{ d.organisation }}
+                </td>
+
+                <td style="max-width:300px">
+
+                  <span [title]="d.motif">
+
+                    {{ d.motif }}
+
                   </span>
+
                 </td>
+
                 <td>
-                  <span class="text-muted">{{ d.telephone }}</span>
+                  {{ d.date_creation | date:'dd/MM/yyyy HH:mm' }}
                 </td>
+
                 <td>
-                  <span class="d-flex align-items-center gap-1 text-muted">
-                    <i class="bi bi-calendar3"></i>
-                    {{ d.date_creation | date:'dd/MM/yyyy' }}
-                  </span>
-                </td>
-                <td>
-                  @if (d.statut === 'en_attente') {
-                  <span class="badge-statut en-attente">À réviser</span>
-                  } @else if (d.statut === 'acceptee') {
-                  <span class="badge-statut validee">Validée</span>
-                  } @else {
-                  <span class="badge-statut refusee">Refusée</span>
-                  }
-                </td>
-                <td>
-                  @if (d.statut === 'en_attente') {
+
                   <div class="d-flex gap-2">
+
                     <button class="btn-action valider" (click)="validerDemande(d.id)" title="Valider">
+
                       <i class="bi bi-check-lg"></i>
+
                     </button>
+
                     <button class="btn-action refuser" (click)="refuserDemande(d.id)" title="Refuser">
+
                       <i class="bi bi-x-lg"></i>
+
                     </button>
+
+                    <!-- <button class="btn-action supprimer" (click)="supprimerDemande(d.id)" title="Supprimer">
+
+                      <i class="bi bi-trash"></i>
+
+                    </button> -->
+
                   </div>
-                  } @else {
-                  <span class="text-muted small">Traité</span>
-                  }
+
                 </td>
+
               </tr>
+
               }
+
             </tbody>
           </table>
         </div>
@@ -198,12 +229,14 @@
 
                     <div class="mb-3">
                       <label class="form-label">Numéro CNI</label>
-                      <input type="text" class="form-control" formControlName="cni" placeholder="Numéro de carte d'identité">
+                      <input type="text" class="form-control" formControlName="cni"
+                        placeholder="Numéro de carte d'identité">
                     </div>
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
-                    <button type="submit" class="btn btn-success" [disabled]="adminForm.invalid">Créer le compte</button>
+                    <button type="submit" class="btn btn-success" [disabled]="adminForm.invalid">Créer le
+                      compte</button>
                   </div>
                 </form>
               </div>
@@ -230,7 +263,8 @@
                   <div class="d-flex align-items-center gap-2">
                     <div class="avatar-initiales position-relative">
                       {{ admin.username ? admin.username.charAt(0).toUpperCase() : 'A' }}
-                      <span class="point-statut" [class.actif]="admin.is_active" [class.inactif]="!admin.is_active"></span>
+                      <span class="point-statut" [class.actif]="admin.is_active"
+                        [class.inactif]="!admin.is_active"></span>
                     </div>
                     <span class="fw-medium">{{ admin.username }}</span>
                   </div>

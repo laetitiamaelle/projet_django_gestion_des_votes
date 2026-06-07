@@ -1,201 +1,800 @@
 <!-- ============================================================
-     DASHBOARD ADMIN — admin-dashboard.component.html
-     Layout sidebar + contenu principal.
-     Affiche les scrutins sous forme de cartes (pas de tableau).
-     Fidèle à la maquette Visily fournie.
+     ADMIN DASHBOARD — admin-dashboard.component.html
      ============================================================ -->
-
 <div class="admin-wrapper">
 
-  <!-- ══════════════════════════════════════════════════════
-       SIDEBAR
-       ══════════════════════════════════════════════════════ -->
-  <aside class="sidebar">
-
-    <!-- Logo -->
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.sidebar-ouverte]="sidebarOuverte()">
     <a href="/" class="sidebar-brand">
-      <div class="sidebar-logo-icon">
-        <i class="bi bi-check2-square"></i>
-      </div>
+      <div class="sidebar-logo-icon"><i class="bi bi-check2-square"></i></div>
       <span class="sidebar-logo-text">Votify</span>
     </a>
-
-    <!-- Navigation -->
     <nav class="sidebar-nav">
-      @for (item of navItems; track item.route) {
-        <a
-          class="sidebar-lien"
-          [class.actif]="item.actif"
-          (click)="setOnglet(item.route)"
-          href="javascript:void(0)">
+      @for (item of navItems; track item.vue) {
+        <a class="sidebar-lien"
+           [class.actif]="vueActive() === item.vue || (item.vue === 'dashboard' && ['creer-scrutin','detail-scrutin','modifier-scrutin'].includes(vueActive()))"
+           (click)="aller(item.vue); sidebarOuverte.set(false)"
+           href="javascript:void(0)">
           <i [class]="'bi ' + item.icone"></i>
           <span>{{ item.label }}</span>
         </a>
       }
     </nav>
-
-    <!-- Déconnexion -->
     <button class="btn-deconnexion">
-      <i class="bi bi-box-arrow-left text-danger"></i>
-      <span>Déconnexion</span>
+      <i class="bi bi-box-arrow-left text-danger"></i><span>Déconnexion</span>
     </button>
+    <p class="sidebar-copyright">© 2026 Votify. Tous droits réservés.</p>
   </aside>
 
-  <!-- ══════════════════════════════════════════════════════
-       ZONE PRINCIPALE
-       ══════════════════════════════════════════════════════ -->
+  @if (sidebarOuverte()) {
+    <div class="sidebar-overlay" (click)="sidebarOuverte.set(false)"></div>
+  }
+
   <div class="main-zone">
 
-    <!-- ── Topbar ─────────────────────────────────────── -->
+    <!-- TOPBAR -->
     <header class="topbar">
+      <button class="btn-hamburger d-lg-none" (click)="sidebarOuverte.update(v => !v)">
+        <i class="bi bi-list"></i>
+      </button>
       <h6 class="topbar-titre">Tableau de bord</h6>
       <div class="topbar-droite">
-        <div class="recherche-box">
+        <div class="recherche-top d-none d-md-flex">
           <i class="bi bi-search"></i>
           <input type="text" placeholder="Rechercher...">
         </div>
-        <button class="btn-notif">
-          <i class="bi bi-bell"></i>
-        </button>
-        <!-- Avatar photo (fictif) -->
-        <div class="avatar-photo">
-          <div class="avatar-initiales-photo">ML</div>
-        </div>
+        <button class="btn-notif"><i class="bi bi-bell"></i></button>
+        <!-- Avatar avec initiales réelles -->
+        <div class="avatar-top" [title]="nomAffiche">{{ initialesUser }}</div>
       </div>
     </header>
 
-    <!-- ── Contenu scrollable ─────────────────────────── -->
-    <main class="main-contenu">
-
-      <!-- En-tête avec boutons d'action -->
-      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-        <div>
-          <h3 class="bienvenue-titre">
-            Bonjour, Marc Lefebvre 👋
-          </h3>
-          <p class="bienvenue-sous-titre">
-            Voici un aperçu de vos activités électorales aujourd'hui.
-          </p>
-        </div>
-        <div class="d-flex gap-2">
-          <button class="btn-exporter">
-            <i class="bi bi-bar-chart me-2"></i>Exporter le rapport
-          </button>
-          <button class="btn-nouveau-scrutin">
-            <i class="bi bi-plus me-1"></i>Nouveau scrutin
-          </button>
-        </div>
+    <!-- Alertes -->
+    @if (erreur()) {
+      <div class="alerte-erreur">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ erreur() }}
+        <button class="btn-fermer-alerte" (click)="fermerMessage()"><i class="bi bi-x-lg"></i></button>
       </div>
+    }
+    @if (msgSucces()) {
+      <div class="alerte-succes">
+        <i class="bi bi-check-circle-fill me-2"></i>{{ msgSucces() }}
+        <button class="btn-fermer-alerte" (click)="fermerMessage()"><i class="bi bi-x-lg"></i></button>
+      </div>
+    }
+    @if (chargement()) { <div class="barre-chargement"></div> }
+    @if (envoiCandidats()) {
+      <div class="alerte-info">
+        <div class="spinner-border spinner-border-sm me-2"></div>
+        Envoi des candidats en cours...
+      </div>
+    }
 
-      <!-- ────────────────────────────────────────────────
-           CARTES STATISTIQUES
-           ──────────────────────────────────────────────── -->
-      <div class="row g-3 mb-4">
-        @for (stat of stats; track stat.titre) {
-          <div class="col-6 col-xl-3">
-            <div class="stat-card">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <p class="stat-label">{{ stat.titre }}</p>
-                  <h3 class="stat-valeur">{{ stat.valeur }}</h3>
-                  @if (stat.variation) {
-                    <p class="stat-variation" [class.positif]="stat.variationPositive">
-                      <i class="bi bi-graph-up-arrow me-1"></i>{{ stat.variation }}
-                    </p>
-                  }
-                  @if (stat.sousTitre && !stat.variation) {
-                    <p class="stat-sous-titre">{{ stat.sousTitre }}</p>
-                  }
-                </div>
-                <div class="stat-icone">
-                  <i [class]="'bi ' + stat.icone"></i>
+    <!-- ══════ VUE : DASHBOARD ══════ -->
+    @if (vueActive() === 'dashboard') {
+      <main class="main-contenu">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+          <div>
+            <!-- Nom réel de l'utilisateur connecté -->
+            <h3 class="page-titre">
+              Bonjour{{ nomAffiche ? ', ' + nomAffiche : '' }} 👋
+            </h3>
+            <p class="page-sous-titre">Voici un aperçu de vos activités électorales.</p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn-exporter"><i class="bi bi-bar-chart me-2"></i>Exporter le rapport</button>
+            <button class="btn-nouveau-scrutin" (click)="aller('creer-scrutin')">
+              <i class="bi bi-plus me-1"></i>Nouveau scrutin
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+          @for (stat of stats; track stat.titre) {
+            <div class="col-6 col-xl-3">
+              <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <p class="stat-label">{{ stat.titre }}</p>
+                    <h3 class="stat-valeur">{{ stat.valeur }}</h3>
+                    @if (stat.sousTitre) { <p class="stat-sous-titre">{{ stat.sousTitre }}</p> }
+                  </div>
+                  <div class="stat-icone"><i [class]="'bi ' + stat.icone"></i></div>
                 </div>
               </div>
             </div>
+          }
+        </div>
+
+        <!-- Scrutins -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h5 class="section-titre mb-0">Mes scrutins récents</h5>
+        </div>
+
+        @if (chargement()) {
+          <div class="text-center py-5 text-muted">
+            <div class="spinner-border spinner-border-sm me-2"></div>Chargement...
+          </div>
+        } @else if (scrutins.length === 0) {
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-clipboard2 fs-2 d-block mb-2 opacity-40"></i>
+            Aucun scrutin créé pour le moment.
+            <div class="mt-3">
+              <button class="btn-nouveau-scrutin" (click)="aller('creer-scrutin')">
+                <i class="bi bi-plus me-1"></i>Créer mon premier scrutin
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="row g-3 mb-4">
+            @for (scrutin of scrutins; track scrutin.id) {
+              <div class="col-md-6 col-xl-4">
+                <div class="scrutin-card">
+                  <div class="scrutin-card-top">
+                    <span class="badge-statut" [ngClass]="'statut-' + scrutin.statut">
+                      <i [class]="'bi ' + getIconeStatut(scrutin.statut) + ' me-1'"></i>
+                      {{ getLibelleStatut(scrutin.statut) }}
+                    </span>
+                    <button class="btn-dots"><i class="bi bi-three-dots-vertical"></i></button>
+                  </div>
+                  <h6 class="scrutin-titre">{{ scrutin.titre }}</h6>
+                  <p class="scrutin-date"><i class="bi bi-calendar3 me-1"></i>{{ scrutin.dateFin }}</p>
+                  <div class="mb-1 d-flex justify-content-between">
+                    <span class="participation-label">Participation</span>
+                    <span class="participation-pct">{{ scrutin.participation }}%</span>
+                  </div>
+                  <div class="barre-fond mb-1">
+                    <div class="barre-remplie"
+                         [style.width.%]="scrutin.participation"
+                         [style.background]="getCouleurParticipation(scrutin.participation)"></div>
+                  </div>
+                  <p class="participation-detail">{{ scrutin.votesExprimes }} votes sur {{ scrutin.totalElecteurs }} électeurs</p>
+                  <div class="scrutin-actions">
+                    <button class="btn-gerer" (click)="ouvrirModifier(scrutin)">Gérer</button>
+                    <button class="btn-details" (click)="voirDetail(scrutin)">Détails</button>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
         }
-      </div>
+      </main>
+      <footer class="page-footer">© 2026 Votify. Tous droits réservés. Sécurisé par chiffrement de bout en bout.</footer>
+    }
 
-      <!-- ────────────────────────────────────────────────
-           MES SCRUTINS RÉCENTS
-           ──────────────────────────────────────────────── -->
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-3">
-          <h5 class="section-titre mb-0">Mes scrutins récents</h5>
-          <span class="derniere-maj">Dernière mise à jour : il y a 5 min</span>
-        </div>
-        <a href="#" class="lien-catalogue">
-          Voir tout le catalogue <i class="bi bi-arrow-right ms-1"></i>
+    <!-- ══════ VUE : CRÉER SCRUTIN ══════ -->
+    @if (vueActive() === 'creer-scrutin') {
+      <main class="main-contenu">
+        <a class="lien-retour mb-4 d-inline-flex" (click)="aller('dashboard')" href="javascript:void(0)">
+          <i class="bi bi-chevron-left me-1"></i> Retour au tableau de bord
         </a>
-      </div>
+        <div class="mb-4">
+          <h3 class="page-titre">Créer un nouveau scrutin</h3>
+          <p class="page-sous-titre">Définissez les paramètres et ajoutez tous les candidats avant de valider.</p>
+        </div>
 
-      <!-- Grille de cartes scrutins -->
-      <div class="row g-3">
-        @for (scrutin of scrutins; track scrutin.id) {
-          <div class="col-md-6 col-xl-4">
-            <div class="scrutin-card">
+        <div class="formulaire-card">
+          <form [formGroup]="scrutinForm" (ngSubmit)="onSubmitScrutin()" novalidate>
 
-              <!-- En-tête carte : statut + menu -->
-              <div class="scrutin-card-header">
-                <span class="badge-statut" [ngClass]="'statut-' + scrutin.statut">
-                  <i [class]="'bi ' + getIconeStatut(scrutin.statut) + ' me-1'"></i>
-                  {{ getLibelleStatut(scrutin.statut) }}
-                </span>
-                <button class="btn-menu-dots">
-                  <i class="bi bi-three-dots-vertical"></i>
+            <!-- Titre -->
+            <div class="mb-4">
+              <label class="label-field">Titre du scrutin</label>
+              <input type="text" formControlName="titre" class="champ"
+                     [class.champ-erreur]="scrutinForm.get('titre')!.invalid && scrutinForm.get('titre')!.touched"
+                     placeholder="Ex: Élections du Bureau des Étudiants 2024">
+              @if (scrutinForm.get('titre')!.invalid && scrutinForm.get('titre')!.touched) {
+                <span class="msg-erreur">Le titre est requis (min 5 caractères).</span>
+              }
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+              <label class="label-field">Description</label>
+              <textarea formControlName="description" class="champ champ-textarea"
+                        [class.champ-erreur]="scrutinForm.get('description')!.invalid && scrutinForm.get('description')!.touched"
+                        rows="4" placeholder="Expliquez l'objectif de ce vote..."></textarea>
+              @if (scrutinForm.get('description')!.invalid && scrutinForm.get('description')!.touched) {
+                <span class="msg-erreur">La description est requise.</span>
+              }
+            </div>
+
+            <!-- Dates -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="label-field">Date et heure de début</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-calendar3 input-icone"></i>
+                  <input type="datetime-local" formControlName="dateDebut" class="champ champ-date"
+                         [class.champ-erreur]="scrutinForm.get('dateDebut')!.invalid && scrutinForm.get('dateDebut')!.touched">
+                </div>
+                @if (scrutinForm.get('dateDebut')!.invalid && scrutinForm.get('dateDebut')!.touched) {
+                  <span class="msg-erreur">La date de début est requise.</span>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="label-field">Date et heure de fin</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-calendar3 input-icone"></i>
+                  <input type="datetime-local" formControlName="dateFin" class="champ champ-date"
+                         [class.champ-erreur]="scrutinForm.get('dateFin')!.invalid && scrutinForm.get('dateFin')!.touched">
+                </div>
+                @if (scrutinForm.get('dateFin')!.invalid && scrutinForm.get('dateFin')!.touched) {
+                  <span class="msg-erreur">La date de fin est requise.</span>
+                }
+              </div>
+            </div>
+
+            <!-- Visibilité -->
+            <div class="mb-4">
+              <label class="label-field">Type de visibilité</label>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="visibilite-card" [class.actif]="visibilite() === 'public'" (click)="visibilite.set('public')">
+                    <div class="visibilite-radio">
+                      <i [class]="'bi ' + (visibilite() === 'public' ? 'bi-record-circle-fill text-primary' : 'bi-circle text-muted')"></i>
+                    </div>
+                    <div class="visibilite-icone" [class.actif]="visibilite() === 'public'">
+                      <i class="bi bi-globe2"></i>
+                    </div>
+                    <div>
+                      <h6 class="visibilite-titre">Scrutin Public</h6>
+                      <p class="visibilite-desc">Ouvert à tous les utilisateurs enregistrés.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="visibilite-card" [class.actif]="visibilite() === 'prive'" (click)="visibilite.set('prive')">
+                    <div class="visibilite-radio">
+                      <i [class]="'bi ' + (visibilite() === 'prive' ? 'bi-record-circle-fill text-primary' : 'bi-circle text-muted')"></i>
+                    </div>
+                    <div class="visibilite-icone" [class.actif]="visibilite() === 'prive'">
+                      <i class="bi bi-lock"></i>
+                    </div>
+                    <div>
+                      <h6 class="visibilite-titre">Scrutin Privé</h6>
+                      <p class="visibilite-desc">Accès restreint par invitation ou code.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══ SECTION CANDIDATS ══ -->
+            <div class="section-candidats-toggle mb-4">
+              <button type="button" class="btn-toggle-candidats"
+                      (click)="afficherFormCandidats.update(v => !v)">
+                <i [class]="'bi ' + (afficherFormCandidats() ? 'bi-chevron-down' : 'bi-chevron-right') + ' me-2'"></i>
+                <i class="bi bi-people me-2"></i>
+                Candidats du scrutin
+                <span class="badge-nb-candidats ms-2">{{ candidatsAAjouter.length }}</span>
+              </button>
+
+              @if (afficherFormCandidats()) {
+                <div class="candidats-section">
+                  <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Ajoutez tous les candidats maintenant. Ils seront enregistrés après la création du scrutin.
+                  </p>
+
+                  <!-- Liste des candidats ajoutés -->
+                  @if (candidatsAAjouter.length > 0) {
+                    <div class="candidats-liste mb-3">
+                      @for (c of candidatsAAjouter; track $index; let i = $index) {
+                        <div class="candidat-mini">
+                          <!-- Photo preview ou avatar initiales -->
+                          @if (c.photoPreview) {
+                            <img [src]="c.photoPreview" class="candidat-mini-photo" alt="photo">
+                          } @else {
+                            <div class="candidat-mini-avatar" [style.background]="getCouleurCandidat(i)">
+                              {{ getInitiales(c.nom) }}
+                            </div>
+                          }
+                          <div class="candidat-mini-info">
+                            <span class="candidat-mini-nom">{{ c.nom }}</span>
+                            <span class="candidat-mini-poste">{{ c.poste }}</span>
+                          </div>
+                          <button type="button" class="btn-suppr-candidat" (click)="supprimerCandidatAAjouter(i)">
+                            <i class="bi bi-trash text-danger"></i>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- Formulaire ajout candidat -->
+                  <div class="ajout-candidat-form">
+                    <h6 class="ajout-titre"><i class="bi bi-person-plus me-2"></i>Ajouter un candidat</h6>
+                    <div class="row g-2 mb-2">
+                      <div class="col-md-4">
+                        <input type="text" class="champ champ-sm"
+                               [(ngModel)]="nouveauCandidat.nom"
+                               [ngModelOptions]="{standalone: true}"
+                               placeholder="Nom complet *">
+                      </div>
+                      <div class="col-md-4">
+                        <input type="text" class="champ champ-sm"
+                               [(ngModel)]="nouveauCandidat.poste"
+                               [ngModelOptions]="{standalone: true}"
+                               placeholder="Poste / Fonction">
+                      </div>
+                      <div class="col-md-4">
+                        <input type="text" class="champ champ-sm"
+                               [(ngModel)]="nouveauCandidat.description"
+                               [ngModelOptions]="{standalone: true}"
+                               placeholder="Programme / Description">
+                      </div>
+                    </div>
+                    <!-- Upload photo -->
+                    <div class="photo-upload-wrap mb-2">
+                      <label class="label-field mb-1">Photo du candidat</label>
+                      <div class="d-flex align-items-center gap-3">
+                        @if (nouveauCandidat.photoPreview) {
+                          <img [src]="nouveauCandidat.photoPreview" class="photo-preview-sm" alt="preview">
+                        } @else {
+                          <div class="photo-placeholder-sm">
+                            <i class="bi bi-person-fill"></i>
+                          </div>
+                        }
+                        <label class="btn-upload-photo">
+                          <i class="bi bi-upload me-2"></i>Choisir une photo
+                          <input type="file" accept="image/*" hidden
+                                 (change)="onPhotoSelected($event, 'creation')">
+                        </label>
+                      </div>
+                    </div>
+                    <button type="button" class="btn-ajouter-candidat"
+                            (click)="ajouterCandidatAAjouterListe()">
+                      <i class="bi bi-plus me-1"></i>Ajouter à la liste
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <button type="submit" class="btn-creer-scrutin" [disabled]="chargement() || envoiCandidats()">
+              @if (chargement() || envoiCandidats()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Créer le scrutin{{ candidatsAAjouter.length > 0 ? ' + ' + candidatsAAjouter.length + ' candidat(s)' : '' }}
+            </button>
+            <div class="text-center mt-3">
+              <a class="lien-annuler" (click)="aller('dashboard')" href="javascript:void(0)">
+                Annuler et revenir au tableau de bord
+              </a>
+            </div>
+          </form>
+        </div>
+      </main>
+    }
+
+    <!-- ══════ VUE : DÉTAIL SCRUTIN ══════ -->
+    @if (vueActive() === 'detail-scrutin' && scrutinSelectionne()) {
+      <main class="main-contenu">
+        <a class="lien-retour mb-4 d-inline-flex" (click)="aller('dashboard')" href="javascript:void(0)">
+          <i class="bi bi-chevron-left me-1"></i> Retour au tableau de bord
+        </a>
+
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+          <div>
+            <span class="badge-statut d-inline-flex mb-2" [ngClass]="'statut-' + scrutinSelectionne()!.statut">
+              <i [class]="'bi ' + getIconeStatut(scrutinSelectionne()!.statut) + ' me-1'"></i>
+              {{ getLibelleStatut(scrutinSelectionne()!.statut) }}
+            </span>
+            <h3 class="page-titre">{{ scrutinSelectionne()!.titre }}</h3>
+            <p class="page-sous-titre"><i class="bi bi-calendar3 me-1"></i>{{ scrutinSelectionne()!.dateFin }}</p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn-exporter"><i class="bi bi-download me-2"></i>Exporter</button>
+            <button class="btn-nouveau-scrutin" (click)="ouvrirModifier(scrutinSelectionne()!)">
+              <i class="bi bi-pencil me-2"></i>Modifier
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="stat-icone"><i class="bi bi-people"></i></div>
+              <div><p class="stat-label">Électeurs inscrits</p><h4 class="stat-valeur">{{ scrutinSelectionne()!.totalElecteurs || '--' }}</h4></div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="stat-icone"><i class="bi bi-check2-circle"></i></div>
+              <div><p class="stat-label">Votes exprimés</p><h4 class="stat-valeur">{{ resultats ? resultats.total_votes : '--' }}</h4></div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="stat-icone"><i class="bi bi-graph-up-arrow"></i></div>
+              <div><p class="stat-label">Participation</p><h4 class="stat-valeur">{{ scrutinSelectionne()!.participation }}%</h4></div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="stat-icone"><i class="bi bi-people-fill"></i></div>
+              <div><p class="stat-label">Candidats</p><h4 class="stat-valeur">{{ candidats.length }}</h4></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Candidats -->
+          <div class="col-lg-8">
+            <div class="detail-card">
+              <div class="detail-card-header">
+                <h5 class="detail-card-titre">
+                  <i class="bi bi-people-fill text-primary me-2"></i>Candidats
+                </h5>
+                <button class="btn-ajouter-small"
+                        (click)="afficherFormCandidatsDetail.update(v => !v)">
+                  <i class="bi bi-plus me-1"></i>Ajouter
                 </button>
               </div>
 
-              <!-- Titre du scrutin -->
-              <h6 class="scrutin-titre">{{ scrutin.titre }}</h6>
-
-              <!-- Date de fin -->
-              <p class="scrutin-date">
-                <i class="bi bi-calendar3 me-1"></i>
-                {{ scrutin.dateFin }}
-              </p>
-
-              <!-- Barre de participation -->
-              <div class="participation-section">
-                <div class="d-flex justify-content-between mb-1">
-                  <span class="participation-label">Participation</span>
-                  <span class="participation-pct">{{ scrutin.participation }}%</span>
-                </div>
-                <div class="barre-fond">
-                  <div
-                    class="barre-remplie"
-                    [style.width.%]="scrutin.participation"
-                    [style.background]="getCouleurParticipation(scrutin.participation)">
+              <!-- Formulaire ajout candidat dans détail -->
+              @if (afficherFormCandidatsDetail()) {
+                <div class="ajout-candidat-form mx-3 mb-3 p-3 border rounded">
+                  <h6 class="ajout-titre mb-3"><i class="bi bi-person-plus me-2"></i>Nouveau candidat</h6>
+                  <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                      <input type="text" class="champ champ-sm"
+                             [(ngModel)]="nouveauCandidatDetail.nom"
+                             placeholder="Nom complet *">
+                    </div>
+                    <div class="col-md-4">
+                      <input type="text" class="champ champ-sm"
+                             [(ngModel)]="nouveauCandidatDetail.poste"
+                             placeholder="Poste / Fonction">
+                    </div>
+                    <div class="col-md-4">
+                      <input type="text" class="champ champ-sm"
+                             [(ngModel)]="nouveauCandidatDetail.description"
+                             placeholder="Programme">
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-3 mb-2">
+                    @if (nouveauCandidatDetail.photoPreview) {
+                      <img [src]="nouveauCandidatDetail.photoPreview" class="photo-preview-sm" alt="preview">
+                    } @else {
+                      <div class="photo-placeholder-sm"><i class="bi bi-person-fill"></i></div>
+                    }
+                    <label class="btn-upload-photo">
+                      <i class="bi bi-upload me-1"></i>Photo
+                      <input type="file" accept="image/*" hidden
+                             (change)="onPhotoSelected($event, 'detail')">
+                    </label>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn-ajouter-candidat" (click)="ajouterCandidatAuScrutin()">
+                      <i class="bi bi-check2 me-1"></i>Enregistrer
+                    </button>
+                    <button type="button" class="btn-annuler-btn" (click)="afficherFormCandidatsDetail.set(false)">
+                      Annuler
+                    </button>
                   </div>
                 </div>
-                <p class="participation-detail">
-                  {{ scrutin.votesExprimes | number }} votes sur
-                  {{ scrutin.totalElecteurs | number }} électeurs
-                </p>
-              </div>
+              }
 
-              <!-- Boutons action -->
-              <div class="scrutin-actions">
-                <button class="btn-gerer">Gérer</button>
-                <button class="btn-details">Détails</button>
-              </div>
+              @if (chargement()) {
+                <div class="text-center p-4 text-muted">
+                  <div class="spinner-border spinner-border-sm me-2"></div>Chargement...
+                </div>
+              } @else if (candidats.length === 0) {
+                <div class="text-center p-4 text-muted">
+                  <i class="bi bi-person-x fs-3 d-block mb-2 opacity-40"></i>
+                  Aucun candidat pour ce scrutin.
+                </div>
+              } @else {
+                @for (c of candidats; track c.id; let i = $index) {
+                  <div class="candidat-ligne-detail">
+                    <!-- Photo réelle ou avatar initiales -->
+                    @if (c.photo_url) {
+                      <img [src]="c.photo_url" class="candidat-photo-sm" alt="photo de {{ c.nom }}">
+                    } @else {
+                      <div class="candidat-avatar-sm" [style.background]="getCouleurCandidat(i)">
+                        {{ getInitiales(c.nom) }}
+                      </div>
+                    }
+                    <div class="candidat-info-detail">
+                      <p class="candidat-nom-detail">{{ c.nom }}</p>
+                      <p class="candidat-poste-detail">{{ c.poste }}</p>
+                      <p class="candidat-desc-sm text-muted small">{{ c.description }}</p>
+                    </div>
+                    @if (resultats) {
+                      <div class="mini-res-barre">
+                        <div class="mini-res-fond">
+                          <div class="mini-res-remplie"
+                               [style.width]="getPourcentageCandidat(c.id) + '%'"
+                               [style.background]="getCouleurCandidat(i)"></div>
+                        </div>
+                        <span class="mini-res-pct">{{ getPourcentageCandidat(c.id) }}%</span>
+                      </div>
+                    }
+                    <button class="btn-suppr-candidat" (click)="supprimerCandidatAPI(c.id)">
+                      <i class="bi bi-trash text-danger"></i>
+                    </button>
+                  </div>
+                }
+              }
+            </div>
+          </div>
 
+          <!-- Infos + Actions -->
+          <div class="col-lg-4">
+            <div class="detail-card mb-3">
+              <div class="detail-card-header">
+                <h5 class="detail-card-titre"><i class="bi bi-info-circle text-primary me-2"></i>Informations</h5>
+              </div>
+              <div class="info-ligne">
+                <span class="info-label">Statut</span>
+                <span class="badge-statut" [ngClass]="'statut-' + scrutinSelectionne()!.statut">
+                  {{ getLibelleStatut(scrutinSelectionne()!.statut) }}
+                </span>
+              </div>
+              <div class="info-ligne">
+                <span class="info-label">Date de fin</span>
+                <span class="info-valeur">{{ scrutinSelectionne()!.dateFin }}</span>
+              </div>
+              <div class="info-ligne">
+                <span class="info-label">Actif</span>
+                <span class="info-valeur">
+                  <i [class]="scrutinSelectionne()!.actif ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"></i>
+                  {{ scrutinSelectionne()!.actif ? 'Oui' : 'Non' }}
+                </span>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-card-header">
+                <h5 class="detail-card-titre">Actions rapides</h5>
+              </div>
+              <div class="d-flex flex-column gap-2 p-3">
+                <button class="btn-action-rapide" (click)="aller('inscriptions')">
+                  <i class="bi bi-person-plus me-2"></i>Voir les inscriptions
+                </button>
+                <button class="btn-action-rapide" (click)="aller('resultats')">
+                  <i class="bi bi-bar-chart-line me-2"></i>Voir les résultats
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    }
+
+    <!-- ══════ VUE : MODIFIER SCRUTIN ══════ -->
+    @if (vueActive() === 'modifier-scrutin' && scrutinSelectionne()) {
+      <main class="main-contenu">
+        <a class="lien-retour mb-4 d-inline-flex" (click)="voirDetail(scrutinSelectionne()!)" href="javascript:void(0)">
+          <i class="bi bi-chevron-left me-1"></i> Retour aux détails
+        </a>
+        <div class="mb-4">
+          <h3 class="page-titre">Modifier le scrutin</h3>
+          <p class="page-sous-titre">Modifiez les paramètres de votre élection.</p>
+        </div>
+        <div class="formulaire-card">
+          <form [formGroup]="modifierForm" (ngSubmit)="onSubmitModifier()" novalidate>
+            <div class="mb-4">
+              <label class="label-field">Titre du scrutin</label>
+              <input type="text" formControlName="titre" class="champ"
+                     [class.champ-erreur]="modifierForm.get('titre')!.invalid && modifierForm.get('titre')!.touched">
+              @if (modifierForm.get('titre')!.invalid && modifierForm.get('titre')!.touched) {
+                <span class="msg-erreur">Le titre est requis.</span>
+              }
+            </div>
+            <div class="mb-4">
+              <label class="label-field">Description</label>
+              <textarea formControlName="description" class="champ champ-textarea" rows="4"
+                        placeholder="Description du scrutin..."></textarea>
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="label-field">Date de début</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-calendar3 input-icone"></i>
+                  <input type="datetime-local" formControlName="dateDebut" class="champ champ-date">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="label-field">Date de fin</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-calendar3 input-icone"></i>
+                  <input type="datetime-local" formControlName="dateFin" class="champ champ-date">
+                </div>
+              </div>
+            </div>
+            <div class="d-flex gap-3 flex-wrap">
+              <button type="submit" class="btn-creer-scrutin" [disabled]="chargement()">
+                @if (chargement()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                <i class="bi bi-check2 me-2"></i>Enregistrer les modifications
+              </button>
+              <button type="button" class="btn-annuler-btn" (click)="voirDetail(scrutinSelectionne()!)">Annuler</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    }
+
+    <!-- ══════ VUE : INSCRIPTIONS ══════ -->
+    @if (vueActive() === 'inscriptions') {
+      <main class="main-contenu">
+        <div class="mb-4">
+          <h3 class="page-titre">Inscriptions</h3>
+          <p class="page-sous-titre">Gérez les demandes d'inscription des électeurs à vos scrutins.</p>
+        </div>
+        <div class="filtres-wrap mb-4">
+          @for (f of [{key:'tous',label:'Tous'},{key:'en_attente',label:'En attente'},{key:'validee',label:'Validées'},{key:'refusee',label:'Refusées'}]; track f.key) {
+            <button class="btn-filtre" [class.actif]="filtreInscription === f.key" (click)="filtreInscription = f.key">
+              {{ f.label }}
+            </button>
+          }
+        </div>
+        @if (chargement()) {
+          <div class="text-center py-5 text-muted">
+            <div class="spinner-border spinner-border-sm me-2"></div>Chargement...
+          </div>
+        } @else {
+          <div class="tableau-card">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr><th>ÉLECTEUR</th><th>SCRUTIN</th><th>DATE</th><th>STATUT</th><th>ACTIONS</th></tr>
+                </thead>
+                <tbody>
+                  @for (insc of inscriptionsFiltrees; track insc.id) {
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="avatar-table">{{ getInitiales(insc.electeur_username ?? 'U') }}</div>
+                          <div>
+                            <span class="fw-medium d-block">{{ insc.electeur_username ?? 'Utilisateur #' + insc.electeur }}</span>
+                            <span class="text-muted small">{{ insc.electeur_email ?? '' }}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-muted small">{{ insc.scrutin_titre ?? 'Scrutin #' + insc.scrutin }}</td>
+                      <td class="text-muted small">{{ insc.date_inscription | date:'dd/MM/yyyy' }}</td>
+                      <td>
+                        <span [class]="'badge-insc ' + getClasseInscription(insc.statut)">
+                          {{ getLibelleStatutInscription(insc.statut) }}
+                        </span>
+                      </td>
+                      <td>
+                        @if (insc.statut === 'en_attente') {
+                          <div class="d-flex gap-2">
+                            <button class="btn-valider-insc" (click)="validerInscription(insc.id)">
+                              <i class="bi bi-check-lg me-1"></i>Valider
+                            </button>
+                            <button class="btn-refuser-insc" (click)="refuserInscription(insc.id)">
+                              <i class="bi bi-x-lg me-1"></i>Refuser
+                            </button>
+                          </div>
+                        } @else {
+                          <span class="text-muted small">Traité</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                  @if (inscriptionsFiltrees.length === 0) {
+                    <tr>
+                      <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        Aucune inscription dans cette catégorie
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           </div>
         }
-      </div>
+      </main>
+    }
 
-    </main>
+    <!-- ══════ VUE : RÉSULTATS ══════ -->
+    @if (vueActive() === 'resultats') {
+      <main class="main-contenu">
+        <div class="mb-4">
+          <h3 class="page-titre">Résultats</h3>
+          <p class="page-sous-titre">Consultez les résultats de vos scrutins terminés.</p>
+        </div>
+        @if (scrutinsTermines.length === 0) {
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-bar-chart fs-2 d-block mb-2 opacity-40"></i>
+            Aucun scrutin terminé pour le moment.
+          </div>
+        } @else {
+          @for (s of scrutinsTermines; track s.id) {
+            <div class="resultat-card mb-3">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                  <span class="badge-statut statut-termine mb-2 d-inline-flex">
+                    <i class="bi bi-check-circle-fill me-1"></i>Terminé
+                  </span>
+                  <h5 class="fw-bold text-dark">{{ s.titre }}</h5>
+                  <p class="text-muted small mb-2">{{ s.dateFin }}</p>
+                </div>
+                <button class="btn-voir-detail" (click)="voirDetail(s)">Voir le détail →</button>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="participation-label">Participation finale</span>
+                <span class="fw-bold text-dark">{{ s.participation }}%</span>
+              </div>
+              <div class="barre-fond">
+                <div class="barre-remplie" [style.width.%]="s.participation"
+                     [style.background]="getCouleurParticipation(s.participation)"></div>
+              </div>
+            </div>
+          }
+        }
+      </main>
+    }
 
-    <!-- Footer -->
-    <footer class="dashboard-footer">
-      © 2026 Votify. Tous droits réservés. Sécurisé par chiffrement de bout en bout.
-    </footer>
+    <!-- ══════ VUE : PROFIL ══════ -->
+    @if (vueActive() === 'profil') {
+      <main class="main-contenu">
+        <div class="mb-4">
+          <h3 class="page-titre">Mon profil</h3>
+          <p class="page-sous-titre">Gérez vos informations personnelles.</p>
+        </div>
+        @if (profil) {
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="profil-card text-center">
+                <div class="profil-avatar">{{ initialesUser }}</div>
+                <h5 class="profil-nom">{{ nomAffiche }}</h5>
+                <p class="profil-role">{{ profil.role === 'admin' ? 'Administrateur' : 'Électeur' }}</p>
+                <p class="text-muted small">{{ profil.email }}</p>
+                @if (profil.telephone) {
+                  <p class="text-muted small">{{ profil.telephone }}</p>
+                }
+                <span class="profil-badge-actif">
+                  <i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Actif
+                </span>
+              </div>
+            </div>
+            <div class="col-lg-8">
+              <div class="formulaire-card">
+                <div class="form-section-header">
+                  <h5 class="form-section-titre">Informations personnelles</h5>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="label-field">Nom d'utilisateur</label>
+                    <div class="input-icon-wrap">
+                      <i class="bi bi-person input-icone"></i>
+                      <input type="text" class="champ" [value]="profil.username" readonly>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="label-field">Email</label>
+                    <div class="input-icon-wrap">
+                      <i class="bi bi-envelope input-icone"></i>
+                      <input type="text" class="champ" [value]="profil.email" readonly>
+                    </div>
+                  </div>
+                  @if (profil.telephone) {
+                    <div class="col-md-6">
+                      <label class="label-field">Téléphone</label>
+                      <div class="input-icon-wrap">
+                        <i class="bi bi-telephone input-icone"></i>
+                        <input type="text" class="champ" [value]="profil.telephone" readonly>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="text-center py-5 text-muted">
+            <div class="spinner-border spinner-border-sm me-2"></div>Chargement du profil...
+          </div>
+        }
+      </main>
+    }
+
   </div>
-
 </div>
-
-<!-- Bouton flottant "+" -->
-<button class="btn-flottant">
-  <i class="bi bi-plus-lg"></i>
-</button>

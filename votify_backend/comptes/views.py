@@ -88,11 +88,11 @@ class CreerDemandeAdminView(generics.CreateAPIView):
 #voir la liste des demande
 class ListeDemandesAdminView(generics.ListAPIView):
 
-    queryset = DemandeAdmin.objects.all()
+   queryset = DemandeAdmin.objects.filter(statut='en_attente')
 
-    serializer_class = DemandeAdminSerializer
+   serializer_class = DemandeAdminSerializer
 
-    permission_classes = [IsSuperAdmin]
+   permission_classes = [IsSuperAdmin]
 
 # valider une demamde
 class ValiderDemandeAdminView(APIView):

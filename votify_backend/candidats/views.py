@@ -1,49 +1,37 @@
 from rest_framework import generics
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import Candidat
-
 from .serializers import CandidatSerializer
-
 from .permissions import IsAdmin
 
 
-# ajouter candidat
 class AjouterCandidatView(generics.CreateAPIView):
-
     serializer_class = CandidatSerializer
-
     permission_classes = [IsAdmin]
+    # MultiPartParser nécessaire pour l'upload de photo
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
 
-# liste candidats d’un scrutin
 class ListeCandidatsScrutinView(generics.ListAPIView):
-
     serializer_class = CandidatSerializer
 
     def get_queryset(self):
+        return Candidat.objects.filter(scrutin_id=self.kwargs['scrutin_id'])
 
-        scrutin_id = self.kwargs['scrutin_id']
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
 
-        return Candidat.objects.filter(
-            scrutin_id=scrutin_id
-        )
 
-
-# modifier candidat
 class ModifierCandidatView(generics.UpdateAPIView):
-
     queryset = Candidat.objects.all()
-
     serializer_class = CandidatSerializer
-
     permission_classes = [IsAdmin]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
 
-# supprimer candidat
 class SupprimerCandidatView(generics.DestroyAPIView):
-
     queryset = Candidat.objects.all()
-
     permission_classes = [IsAdmin]
-
-# Create your views here.
