@@ -8,33 +8,66 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from .models import User
 
+from rest_framework import serializers
+from .models import User
+from django.core.mail import send_mail
+# On importe la même fonction de génération que tes vues utilisent
+from .services import generate_password  
+
 class RegisterSerializer(serializers.ModelSerializer):
-    # On déclare explicitement les champs attendus depuis ton formulaire Angular
+    # On mappe explicitement les données envoyées par ton formulaire Angular
     first_name = serializers.CharField(required=True)
     telephone = serializers.CharField(required=True)
     cni = serializers.CharField(required=True)
 
     class Meta:
         model = User
-        # On expose exactement ce que ton Angular envoie
         fields = ['first_name', 'email', 'telephone', 'cni']
 
     def create(self, validated_data):
-        # 💡 On extrait l'email pour générer le username requis par AbstractUser
         email = validated_data['email']
-        generated_username = email.split('@')[0]
+        first_name = validated_data.get('first_name', '')
         
+        # 1. Génération du username requis par AbstractUser (basé sur l'email)
+        generated_username = email.split('@')[0]
         if User.objects.filter(username=generated_username).exists():
             import uuid
             generated_username = f"{generated_username}_{uuid.uuid4().hex[:4]}"
 
-        # On injecte le username généré dans les données validées
-        validated_data['username'] = generated_username
+        # 2. Utilisation de TA fonction pour générer le mot de passe secret
+        password = generate_password()
 
-        #  On appelle la méthode create_user d'origine de ton modèle
-        # en lui passant le dictionnaire complet. Ton système d'envoi d'e-mail va se déclencher tout seul.
-        return User.objects.create_user(**validated_data)
+        # 3. Création de l'utilisateur Électeur
+        user = User.objects.create_user(
+            username=generated_username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            telephone=validated_data.get('telephone', ''),
+            cni=validated_data.get('cni', ''),
+            role='electeur',
+            must_change_password=True # Force l'électeur à changer son mot de passe au premier login
+        )
 
+        # 4. Envoi de l'email (sur le même modèle que tes vues d'administration)
+        send_mail(
+            subject='Votre compte Électeur Votify',
+            message=f'''Bonjour {first_name},
+
+Votre compte électeur a été créé avec succès sur l'application Votify.
+
+Voici vos paramètres de connexion :
+Email : {email}
+Mot de passe temporaire : {password}
+
+Veuillez modifier votre mot de passe dès votre première connexion pour sécuriser votre accès.
+''',
+            from_email='laetitiamaelle740@gmail.com', # Même adresse d'expédition que tes autres vues
+            recipient_list=[email],
+            fail_silently=False
+        )
+
+        return user
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
