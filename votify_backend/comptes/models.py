@@ -34,7 +34,7 @@ class User(AbstractUser):
 
     is_verified = models.BooleanField(default=False)
    
-    must_change_password = models.BooleanField(default=True)
+    must_change_password = models.BooleanField(default=False)
     USERNAME_FIELD = 'email' # <-- Dit à Django d'utiliser l'email comme identifiant
     REQUIRED_FIELDS = ['username'] # Obligatoire pour AbstractUser
     def __str__(self):

@@ -1,114 +1,84 @@
+# comptes/serializers.py — ajouter le UserSerializer si pas encore présent
 from rest_framework import serializers
-from django.core.mail import send_mail
+from .models import User, DemandeAdmin
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import User,DemandeAdmin
-from .services import generate_password
 
+# comptes/serializers.py
+from rest_framework import serializers
+from .models import User
 
 class RegisterSerializer(serializers.ModelSerializer):
+    # On déclare explicitement les champs attendus depuis ton formulaire Angular
+    first_name = serializers.CharField(required=True)
+    telephone = serializers.CharField(required=True)
+    cni = serializers.CharField(required=True)
 
     class Meta:
         model = User
-        fields = [
-            'first_name',
-            'email',
-            'telephone',
-            'cni'
-        ]
+        # On expose exactement ce que ton Angular envoie
+        fields = ['first_name', 'email', 'telephone', 'cni']
 
     def create(self, validated_data):
+        # 💡 On extrait l'email pour générer le username requis par AbstractUser
+        email = validated_data['email']
+        generated_username = email.split('@')[0]
+        
+        if User.objects.filter(username=generated_username).exists():
+            import uuid
+            generated_username = f"{generated_username}_{uuid.uuid4().hex[:4]}"
 
-        generated_password = generate_password()
+        # On injecte le username généré dans les données validées
+        validated_data['username'] = generated_username
 
-        user = User.objects.create_user(
-            username=validated_data['first_name'],
-            email=validated_data['email'],
-            password=generated_password,
-            telephone=validated_data.get('telephone'),
-            cni=validated_data.get('cni'),
-            role='electeur',
-            must_change_password=True
-        )
-
-        send_mail(
-            subject='Bienvenue sur Votify',
-            message=f'''
-Bonjour {user.username},
-
-Votre compte a été créé avec succès sur l'application votify.
-
-Vos paramètres de connexion :
-
-email : {user.email}
-Mot de passe : {generated_password}
-
-Veuillez modifier votre mot de passe après votre première connexion.
-
-
-''',
-            from_email='laetitiamaelle740@gmail.com',
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-
-        return user
+        #  On appelle la méthode create_user d'origine de ton modèle
+        # en lui passant le dictionnaire complet. Ton système d'envoi d'e-mail va se déclencher tout seul.
+        return User.objects.create_user(**validated_data)
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
-        fields = [
-            'id',
-            'first_name',
-            'username',
-            'email',
-            'telephone',
-            'cni',
-            'role',
-            'must_change_password'
-        ]
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'telephone', 'is_active']
+        read_only_fields = ['id', 'email', 'role', 'is_active']
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=6)
 
-    old_password = serializers.CharField()
 
-    new_password = serializers.CharField()
 class DemandeAdminSerializer(serializers.ModelSerializer):
-
     class Meta:
-
         model = DemandeAdmin
-
-        fields = '__all__'
-
-        read_only_fields = ['statut', 'date_creation']
+        fields = ['id', 'nom', 'email', 'telephone', 'cni', 'organisation', 'motif', 'statut', 'date_creation']
+        read_only_fields = ['id', 'statut', 'date_creation']
 
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+# comptes/serializers.py
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Ce bloc ajoute les infos *à l'intérieur* du jeton JWT crypté
+        token['role'] = user.role
+        token['username'] = user.username
+        token['must_change_password'] = user.must_change_password
+        return token
+
     def validate(self, attrs):
+        # Ce bloc modifie le corps de la réponse JSON renvoyée lors du POST /login
         data = super().validate(attrs)
         
-        # On ajoute le username dans les données renvoyées lors de la connexion
+        # On injecte l'objet 'user' attendu par ton code Angular !
         data['user'] = {
             'id': self.user.id,
+            'username': self.user.username,
             'email': self.user.email,
-            'username': self.user.username,  # 🌟 C'EST CETTE LIGNE QU'IL FAUT RAJOUTER
-            'role': getattr(self.user, 'role', 'electeur'),
-            'is_superuser': self.user.is_superuser
+            'role': self.user.role,
+            'is_superuser': self.user.is_superuser,
+            'must_change_password': self.user.must_change_password
         }
-        return data
-    def validate(self, attrs):
-        data = super().validate(attrs)
         
-        # C'est ici qu'on ajoute l'objet 'user' dans la réponse JSON !
-        data['user'] = {
-            'id': self.user.id,
-            'email': self.user.email,
-            'role': getattr(self.user, 'role', 'electeur'),
-            'is_superuser': self.user.is_superuser
-        }
         return data

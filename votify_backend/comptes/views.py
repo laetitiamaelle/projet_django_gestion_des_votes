@@ -279,3 +279,82 @@ def toggle_statut_admin(request, pk):
         "message": "Statut mis à jour avec succès",
         "is_active": administrateur.is_active  # On renvoie le nouvel état réel
     }, status=status.HTTP_200_OK)
+
+# Ajouter cette vue dans comptes/views.py
+# Elle permet à l'utilisateur connecté de modifier son username et telephone
+
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .serializers import UserSerializer
+
+
+class ModifierProfilView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+        username  = request.data.get('username')
+        telephone = request.data.get('telephone')
+
+        if username:
+            user.username = username
+        if telephone is not None:
+            user.telephone = telephone
+
+        user.save()
+        return Response({
+            'message': 'Profil mis à jour',
+            'username':  user.username,
+            'telephone': user.telephone,
+        })
+# statistique
+
+# À ajouter dans comptes/views.py
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .permissions import IsSuperAdmin
+from .models import User
+from .models import DemandeAdmin
+
+# Import des modèles des autres apps
+# (adapter les chemins selon votre projet)
+try:
+    from scrutins.models import Scrutin
+except ImportError:
+    Scrutin = None
+
+try:
+    from vote.models import InscriptionScrutin
+except ImportError:
+    InscriptionScrutin = None
+
+
+class StatsSuperAdminView(APIView):
+    """
+    Retourne les statistiques globales pour le dashboard SuperAdmin.
+    GET /api/auth/superadmin/stats/
+    """
+    permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+        # Nombre total de scrutins
+        total_scrutins = Scrutin.objects.count() if Scrutin else 0
+
+        # Nombre total d'admins actifs
+        total_admins = User.objects.filter(role='admin').count()
+
+        # Nombre total d'électeurs
+        total_electeurs = User.objects.filter(role='electeur').count()
+
+        # Demandes en attente
+        demandes_attente = DemandeAdmin.objects.filter(statut='en_attente').count()
+
+        return Response({
+            'total_scrutins':   total_scrutins,
+            'total_admins':     total_admins,
+            'total_electeurs':  total_electeurs,
+            'demandes_attente': demandes_attente,
+        })

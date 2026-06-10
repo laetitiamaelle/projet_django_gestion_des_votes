@@ -143,10 +143,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
-    'DEFAULT_PAGINATION_CLASS':
-    'rest_framework.pagination.PageNumberPagination',
-
-    'PAGE_SIZE': 2,
+    
 }
 CORS_ALLOW_ALL_ORIGINS = True
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -175,6 +172,6 @@ from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'USER_ID_FIELD': 'email',      # 🌟 CRUCIAL : Indique que l'ID du token est l'email
+    'USER_ID_FIELD': 'email',      #  Indique que l'ID du token est l'email
     'USER_ID_CLAIM': 'user_id',
 }

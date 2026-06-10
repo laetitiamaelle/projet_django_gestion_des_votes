@@ -1,9 +1,10 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
 
-from .models import InscriptionScrutin, Vote
-from .serializers import InscriptionScrutinSerializer, VoteSerializer
+from .models import InscriptionScrutin, Vote, Notification
+from .serializers import InscriptionScrutinSerializer, VoteSerializer, NotificationSerializer
 from .permissions import IsElecteur, IsAdmin
 
 from candidats.models import Candidat
@@ -12,16 +13,23 @@ from candidats.models import Candidat
 # ── ÉLECTEUR ─────────────────────────────────────────────────
 
 class InscriptionScrutinView(generics.CreateAPIView):
-    """Électeur : s'inscrire à un scrutin."""
     serializer_class = InscriptionScrutinSerializer
     permission_classes = [IsElecteur]
 
     def perform_create(self, serializer):
-        serializer.save(electeur=self.request.user)
+        inscription = serializer.save(electeur=self.request.user)
+        # Notifier l'admin du scrutin
+        admin = inscription.scrutin.admin
+        Notification.objects.create(
+            destinataire=admin,
+            message=f"{self.request.user.username} a demandé l'inscription au scrutin « {inscription.scrutin.titre} ».",
+            type='inscription_demande',
+            scrutin=inscription.scrutin,
+            inscription=inscription,
+        )
 
 
 class MesInscriptionsView(generics.ListAPIView):
-    """Électeur : voir toutes ses propres inscriptions (tous statuts)."""
     serializer_class = InscriptionScrutinSerializer
     permission_classes = [IsElecteur]
 
@@ -32,56 +40,33 @@ class MesInscriptionsView(generics.ListAPIView):
 
 
 class VoterView(generics.CreateAPIView):
-    """Électeur : voter pour un candidat."""
     serializer_class = VoteSerializer
     permission_classes = [IsElecteur]
 
     def create(self, request, *args, **kwargs):
         candidat_id = request.data.get('candidat')
-
         try:
             candidat = Candidat.objects.get(id=candidat_id)
         except Candidat.DoesNotExist:
-            return Response(
-                {'error': 'Candidat introuvable'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({'error': 'Candidat introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
         scrutin = candidat.scrutin
 
-        # Vérifier inscription acceptée
-        inscription = InscriptionScrutin.objects.filter(
-            electeur=request.user,
-            scrutin=scrutin,
-            statut='accepte'
-        ).exists()
+        if not InscriptionScrutin.objects.filter(
+            electeur=request.user, scrutin=scrutin, statut='accepte'
+        ).exists():
+            return Response({'error': 'Inscription non validée'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not inscription:
-            return Response(
-                {'error': 'Inscription non validée'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Empêcher double vote
         if Vote.objects.filter(electeur=request.user, scrutin=scrutin).exists():
-            return Response(
-                {'error': 'Vous avez déjà voté'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'Vous avez déjà voté'}, status=status.HTTP_400_BAD_REQUEST)
 
-        Vote.objects.create(
-            electeur=request.user,
-            scrutin=scrutin,
-            candidat=candidat
-        )
-
+        Vote.objects.create(electeur=request.user, scrutin=scrutin, candidat=candidat)
         return Response({'message': 'Vote effectué avec succès'})
 
 
 # ── ADMIN ─────────────────────────────────────────────────────
 
 class InscriptionsEnAttenteView(generics.ListAPIView):
-    """Admin : voir les inscriptions en attente sur ses scrutins."""
     serializer_class = InscriptionScrutinSerializer
     permission_classes = [IsAdmin]
 
@@ -89,19 +74,6 @@ class InscriptionsEnAttenteView(generics.ListAPIView):
         return InscriptionScrutin.objects.filter(
             scrutin__admin=self.request.user,
             statut='en_attente'
-        ).select_related('electeur', 'scrutin')
-
-
-class InscriptionsScrutinView(generics.ListAPIView):
-    """Admin : toutes les inscriptions d'un scrutin."""
-    serializer_class = InscriptionScrutinSerializer
-    permission_classes = [IsAdmin]
-
-    def get_queryset(self):
-        scrutin_id = self.kwargs['scrutin_id']
-        return InscriptionScrutin.objects.filter(
-            scrutin_id=scrutin_id,
-            scrutin__admin=self.request.user
         ).select_related('electeur', 'scrutin')
 
 
@@ -114,6 +86,14 @@ class AccepterInscriptionView(generics.UpdateAPIView):
         inscription = self.get_object()
         inscription.statut = 'accepte'
         inscription.save()
+        # Notifier l'électeur
+        Notification.objects.create(
+            destinataire=inscription.electeur,
+            message=f"Votre inscription au scrutin « {inscription.scrutin.titre} » a été acceptée. Vous pouvez maintenant voter.",
+            type='inscription_acceptee',
+            scrutin=inscription.scrutin,
+            inscription=inscription,
+        )
         return Response({'message': 'Inscription acceptée'})
 
 
@@ -126,13 +106,47 @@ class RefuserInscriptionView(generics.UpdateAPIView):
         inscription = self.get_object()
         inscription.statut = 'refuse'
         inscription.save()
+        # Notifier l'électeur
+        Notification.objects.create(
+            destinataire=inscription.electeur,
+            message=f"Votre inscription au scrutin « {inscription.scrutin.titre} » a été refusée.",
+            type='inscription_refusee',
+            scrutin=inscription.scrutin,
+            inscription=inscription,
+        )
         return Response({'message': 'Inscription refusée'})
+
+
+# ── NOTIFICATIONS ─────────────────────────────────────────────
+
+class MesNotificationsView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.filter(
+            destinataire=self.request.user
+        ).order_by('-date_creation')
+
+
+class NombreNotificationsNonLuesView(APIView):
+    def get(self, request):
+        count = Notification.objects.filter(
+            destinataire=request.user, lue=False
+        ).count()
+        return Response({'non_lues': count})
+
+
+class MarquerNotificationsLuesView(APIView):
+    def post(self, request):
+        Notification.objects.filter(
+            destinataire=request.user, lue=False
+        ).update(lue=True)
+        return Response({'message': 'Notifications marquées comme lues'})
 
 
 # ── RÉSULTATS ─────────────────────────────────────────────────
 
-class ResultatsScrutinView(generics.ListAPIView):
-
+class ResultatsScrutinView(APIView):
     def get(self, request, scrutin_id):
         candidats = Candidat.objects.filter(scrutin_id=scrutin_id)
         total_votes = Vote.objects.filter(scrutin_id=scrutin_id).count()
@@ -144,14 +158,11 @@ class ResultatsScrutinView(generics.ListAPIView):
             resultats.append({
                 'candidat_id': candidat.id,
                 'candidat':    candidat.nom,
+                'poste':       candidat.poste,
+                'photo_url':   request.build_absolute_uri(candidat.photo.url) if candidat.photo else None,
                 'votes':       nombre_votes,
                 'pourcentage': pourcentage,
             })
 
-        # Trier par votes décroissant
         resultats.sort(key=lambda x: x['votes'], reverse=True)
-
-        return Response({
-            'total_votes': total_votes,
-            'resultats':   resultats,
-        })
+        return Response({'total_votes': total_votes, 'resultats': resultats})
